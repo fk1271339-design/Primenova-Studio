@@ -1,0 +1,249 @@
+/* ══════════════════════════════════════════════════════════════
+   App.css – Component-level & section-specific enhancement styles
+   for Primenova Studio
+   ══════════════════════════════════════════════════════════════ */
+
+/* ──────────────────────────────────────────────────────────────
+   NAVBAR ENHANCEMENTS
+   ────────────────────────────────────────────────────────────── */
+header nav,
+header > div {
+  transition: background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+}
+
+header nav:hover,
+header > div:hover {
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.light header nav:hover,
+.light header > div:hover {
+  box-shadow:
+    0 10px 40px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   HERO SECTION
+   ────────────────────────────────────────────────────────────── */
+
+/* Gradient text shimmer on hero heading */
+.hero-heading-shimmer {
+  background: linear-gradient(
+    120deg,
+    hsl(var(--foreground)) 0%,
+    hsl(var(--foreground)) 40%,
+    hsl(var(--primary)) 50%,
+    hsl(var(--foreground)) 60%,
+    hsl(var(--foreground)) 100%
+  );
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 4s ease-in-out infinite;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   SERVICES TILT CARDS
+   ────────────────────────────────────────────────────────────── */
+
+/* Service cards – Inner glow on hover */
+.liquid-glass.group:hover {
+  border-color: hsl(var(--primary) / 0.15);
+}
+
+.light .liquid-glass.group:hover {
+  border-color: hsl(var(--primary) / 0.2);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   PORTFOLIO CARDS – SPOTLIGHT OVERLAY
+   ────────────────────────────────────────────────────────────── */
+
+/* Portfolio card image transitions */
+[id="portfolio"] .group img {
+  transition: transform 0.7s cubic-bezier(0.16, 1, 0.3, 1), filter 0.5s ease;
+}
+
+[id="portfolio"] .group:hover img {
+  filter: grayscale(0) contrast(1.05) brightness(0.5);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   ABOUT PILLARS
+   ────────────────────────────────────────────────────────────── */
+[id="about"] .group:hover h3 {
+  color: hsl(var(--primary));
+  transition: color 0.3s ease;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   AI ASSISTANT CHAT CONSOLE
+   ────────────────────────────────────────────────────────────── */
+
+/* Chat message bubbles */
+[id="ai-assistant"] .overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: hsl(var(--muted-foreground) / 0.15) transparent;
+}
+
+[id="ai-assistant"] .overflow-y-auto::-webkit-scrollbar {
+  width: 5px;
+}
+
+[id="ai-assistant"] .overflow-y-auto::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground) / 0.2);
+  border-radius: 999px;
+}
+
+/* Chat input glow on focus */
+[id="ai-assistant"] input:focus {
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.15);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   PRICING CARDS
+   ────────────────────────────────────────────────────────────── */
+
+/* All pricing cards hover lift */
+[id="pricing"] > div > div > div {
+  transition: transform 0.35s ease, box-shadow 0.35s ease;
+}
+
+[id="pricing"] > div > div > div:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+}
+
+.light [id="pricing"] > div > div > div:hover {
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.08);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   CONTACT FORM
+   ────────────────────────────────────────────────────────────── */
+
+/* Inputs consistent focus glow */
+[id="contact"] input:focus,
+[id="contact"] textarea:focus {
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.15);
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+/* Placeholder styling */
+[id="contact"] input::placeholder,
+[id="contact"] textarea::placeholder {
+  color: hsl(var(--muted-foreground) / 0.5);
+  font-weight: 300;
+}
+
+/* Social icon buttons hover glow */
+[id="contact"] a[aria-label]:hover {
+  box-shadow: 0 4px 16px hsl(var(--primary) / 0.15);
+}
+
+/* ──────────────────────────────────────────────────────────────
+   FOOTER
+   ────────────────────────────────────────────────────────────── */
+footer {
+  position: relative;
+}
+
+footer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60%;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--border)),
+    transparent
+  );
+}
+
+footer a {
+  position: relative;
+}
+
+footer a::after {
+  content: "";
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: hsl(var(--primary));
+  transition: width 0.3s ease;
+}
+
+footer a:hover::after {
+  width: 100%;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   RESPONSIVE UTILITIES
+   ────────────────────────────────────────────────────────────── */
+
+/* Ensure no horizontal overflow on mobile */
+@media (max-width: 768px) {
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Reduce large headings on very small screens */
+  h1, h2 {
+    word-break: break-word;
+    hyphens: auto;
+  }
+}
+
+/* Reduce motion for accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────────
+   UTILITY: GRADIENT TEXT
+   ────────────────────────────────────────────────────────────── */
+.text-gradient {
+  background: linear-gradient(135deg, hsl(28, 82%, 72%), hsl(350, 80%, 65%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.light .text-gradient {
+  background: linear-gradient(135deg, hsl(28, 82%, 55%), hsl(350, 80%, 55%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ──────────────────────────────────────────────────────────────
+   UTILITY: NOISE TEXTURE OVERLAY
+   ────────────────────────────────────────────────────────────── */
+.noise-overlay::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  opacity: 0.015;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}

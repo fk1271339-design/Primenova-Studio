@@ -1,0 +1,100 @@
+spring:
+  config:
+    # Dev/source runs (`mvn spring-boot:run`) ke liye project-root .env ko
+    # automatically load karo — warna SMTP/OAuth placeholder credentials pe
+    # jata hai aur "Authentication failed" aata hai. [.properties] suffix
+    # Spring ko .env ko properties format mein parse karne ke liye batata hai.
+    # Optional: file na mile toh defaults (application.yml) use hote hain.
+    # run-backend.bat / docker-compose env vars set karte hain — wo precedence
+    # mein inhe override kar dete hain, isliye koi conflict nahi.
+    import:
+      - optional:file:./.env[.properties]
+      - optional:file:../.env[.properties]
+  application:
+    name: studio
+
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI:mongodb://localhost:27017/primenova_db}
+      # Auto-create indexes declared via @Indexed (unique email / token indexes).
+      # NOTE: if existing data already contains duplicate emails the unique index
+      # creation fails at startup — deduplicate first (see audit report).
+      auto-index-creation: true
+
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            # Placeholder defaults — real credentials .env / env vars se aate hain.
+            # Pehle real secrets isi file me default the (leak risk) — ab fail-fast
+            # placeholders hain, app tabhi OAuth kaam karega jab creds properly set hon.
+            client-id: ${GOOGLE_CLIENT_ID:google-oauth-placeholder-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:google-oauth-placeholder-client-secret}
+            scope:
+              - email
+              - profile
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+          github:
+            # Empty defaults se Spring Boot OAuth validation fail ho jata hai ("Client id must not be empty")
+            # aur app start hi nahi hota. Non-empty placeholder rakhe hain; real credentials env vars se aate hain.
+            client-id: ${GITHUB_CLIENT_ID:github-oauth-placeholder-client-id}
+            client-secret: ${GITHUB_CLIENT_SECRET:github-oauth-placeholder-client-secret}
+            scope:
+              - read:user
+              - user:email
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+
+  mail:
+    host: ${SMTP_HOST:smtp.gmail.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:placeholder@gmail.com}
+    password: ${SMTP_PASSWORD:placeholder-app-password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+          # Fail fast instead of hanging for 60s+ when SMTP is unreachable
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
+
+app:
+  # NEVER put a real secret here. Insecure dev-only placeholder — ConfigStartupValidator
+  # logs an ERROR (dev) and aborts startup (prod) unless a strong JWT_SECRET is provided.
+  jwtSecret: ${JWT_SECRET:CHANGE_ME_dev_only_insecure_jwt_secret_32chars_min}
+  # .env me JWT_ACCESS_EXPIRATION_MS / JWT_REFRESH_EXPIRATION_MS hain;
+  # docker-compose JWT_ACCESS_EXPIRATION / JWT_REFRESH_EXPIRATION pass karta hai.
+  # Dono ko support karne ke liye nested placeholder.
+  jwtAccessExpirationMs: ${JWT_ACCESS_EXPIRATION_MS:${JWT_ACCESS_EXPIRATION:900000}}
+  jwtRefreshExpirationMs: ${JWT_REFRESH_EXPIRATION_MS:${JWT_REFRESH_EXPIRATION:86400000}}
+  adminEmail: ${ADMIN_EMAIL:hello@primenova.studio}
+  # Sender address on all emails. Defaults to the SMTP username — Gmail rejects
+  # messages whose From differs from the authenticated account.
+  mailFrom: ${SMTP_FROM:${SMTP_USERNAME:placeholder@gmail.com}}
+  # Free keyless IP geolocation (ipwho.is). Disable with GEO_LOOKUP_ENABLED=false for offline dev.
+  geoApiUrl: ${GEO_API_URL:https://ipwho.is/}
+  geoLookupEnabled: ${GEO_LOOKUP_ENABLED:true}
+  # Frontend base URL — OAuth callback + email verification/reset links isi se bante hain.
+  # Default: same server (single-server mode) — frontend isi :8080 pe serve hota hai.
+  frontendUrl: ${FRONTEND_URL:http://localhost:8080}
+  # Email verification token lifetime + resend cooldown (anti-spam).
+  verificationTokenExpiryHours: ${VERIFICATION_TOKEN_EXPIRY_HOURS:24}
+  emailResendCooldownSeconds: ${EMAIL_RESEND_COOLDOWN_SECONDS:60}
+  # CORS allowed origins (comma separated). Same-origin calls ko CORS ki zaroorat
+  # nahi; 5173/3000 sirf dev/multi-server setups ke liye rakhe hain.
+  corsOrigins: ${CORS_ORIGINS:http://localhost:8080,http://localhost:5173,http://localhost:3000,http://localhost:80}
+
+logging:
+  # Real-time file log — console (stdout redirect) chunk-buffered hota hai, isliye
+  # errors turant nahi dikhte. File appender immediateFlush karta hai, isliye
+  # backend\logs\application.log me har line turant aati hai.
+  file:
+    name: ${LOG_FILE:logs/application.log}
+
+server:
+  port: 8080
+  # Reverse proxy ke peeche bhi {baseUrl} sahi resolve ho (X-Forwarded-* headers)
+  forward-headers-strategy: framework
