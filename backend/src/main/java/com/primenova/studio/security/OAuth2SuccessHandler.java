@@ -134,14 +134,9 @@ public class OAuth2SuccessHandler extends SimpleUrlAuthenticationSuccessHandler 
     }
 
     private String resolveBaseUrl(HttpServletRequest request) {
-        String referer = request.getHeader("Referer");
-        if (referer != null && (referer.contains("localhost:5173") || referer.contains("127.0.0.1:5173"))) {
-            return "http://localhost:5173";
-        }
-        String origin = request.getHeader("Origin");
-        if (origin != null && (origin.contains("localhost:5173") || origin.contains("127.0.0.1:5173"))) {
-            return "http://localhost:5173";
-        }
-        return (frontendUrl != null && !frontendUrl.isBlank()) ? frontendUrl : "http://localhost:8080";
+        // frontendUrl is configured via app.frontendUrl (env: FRONTEND_URL).
+        // After the Google redirect chain, Referer/Origin headers come from
+        // Google — not the frontend — so header-sniffing is unreliable.
+        return (frontendUrl != null && !frontendUrl.isBlank()) ? frontendUrl : "http://localhost:5173";
     }
 }

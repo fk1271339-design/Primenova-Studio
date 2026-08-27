@@ -136,3 +136,35 @@ export const SendIcon = (props: React.SVGProps<SVGSVGElement>) => (
     <polygon points="22 2 15 22 11 13 2 9 22 2" fill="currentColor" />
   </IconWrapper>
 );
+
+export const DownloadIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <IconWrapper {...props}>
+    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  </IconWrapper>
+);
+
+export const MailIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <IconWrapper {...props}>
+    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" stroke="currentColor" strokeWidth="2" fill="none" />
+    <polyline points="22,6 12,13 2,6" stroke="currentColor" strokeWidth="2" fill="none" />
+  </IconWrapper>
+);
+
+export const PhoneIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <IconWrapper {...props}>
+    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.79 19.79 0 01-8.63-3.07 19.5 19.5 0 01-6-6 19.79 19.79 0 01-3.07-8.67A2 2 0 014.11 2h3a2 2 0 012 1.72 12.84 12.84 0 00.7 2.81 2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45 12.84 12.84 0 002.81.7A2 2 0 0122 16.92z" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+  </IconWrapper>
+);
+
+export const MapPinIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <IconWrapper {...props}>
+    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" stroke="currentColor" strokeWidth="2" fill="none" />
+    <circle cx="12" cy="10" r="3" stroke="currentColor" strokeWidth="2" fill="none" />
+  </IconWrapper>
+);
+
+export const ExternalLinkIcon = (props: React.SVGProps<SVGSVGElement>) => (
+  <IconWrapper {...props}>
+    <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6M15 3h6v6M10 14L21 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+  </IconWrapper>
+);

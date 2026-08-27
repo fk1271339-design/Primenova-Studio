@@ -26,20 +26,15 @@ spring:
       client:
         registration:
           google:
-            # Placeholder defaults — real credentials .env / env vars se aate hain.
-            # Pehle real secrets isi file me default the (leak risk) — ab fail-fast
-            # placeholders hain, app tabhi OAuth kaam karega jab creds properly set hon.
-            client-id: ${GOOGLE_CLIENT_ID:google-oauth-placeholder-client-id}
-            client-secret: ${GOOGLE_CLIENT_SECRET:google-oauth-placeholder-client-secret}
+            client-id: ${GOOGLE_CLIENT_ID:your-google-client-id.apps.googleusercontent.com}
+            client-secret: ${GOOGLE_CLIENT_SECRET:CHANGE_ME}
             scope:
               - email
               - profile
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
           github:
-            # Empty defaults se Spring Boot OAuth validation fail ho jata hai ("Client id must not be empty")
-            # aur app start hi nahi hota. Non-empty placeholder rakhe hain; real credentials env vars se aate hain.
-            client-id: ${GITHUB_CLIENT_ID:github-oauth-placeholder-client-id}
-            client-secret: ${GITHUB_CLIENT_SECRET:github-oauth-placeholder-client-secret}
+            client-id: ${GITHUB_CLIENT_ID:}
+            client-secret: ${GITHUB_CLIENT_SECRET:}
             scope:
               - read:user
               - user:email
@@ -49,7 +44,7 @@ spring:
     host: ${SMTP_HOST:smtp.gmail.com}
     port: ${SMTP_PORT:587}
     username: ${SMTP_USERNAME:placeholder@gmail.com}
-    password: ${SMTP_PASSWORD:placeholder-app-password}
+    password: ${SMTP_PASSWORD:CHANGE_ME}
     properties:
       mail:
         smtp:
@@ -62,14 +57,9 @@ spring:
           writetimeout: 5000
 
 app:
-  # NEVER put a real secret here. Insecure dev-only placeholder — ConfigStartupValidator
-  # logs an ERROR (dev) and aborts startup (prod) unless a strong JWT_SECRET is provided.
-  jwtSecret: ${JWT_SECRET:CHANGE_ME_dev_only_insecure_jwt_secret_32chars_min}
-  # .env me JWT_ACCESS_EXPIRATION_MS / JWT_REFRESH_EXPIRATION_MS hain;
-  # docker-compose JWT_ACCESS_EXPIRATION / JWT_REFRESH_EXPIRATION pass karta hai.
-  # Dono ko support karne ke liye nested placeholder.
-  jwtAccessExpirationMs: ${JWT_ACCESS_EXPIRATION_MS:${JWT_ACCESS_EXPIRATION:900000}}
-  jwtRefreshExpirationMs: ${JWT_REFRESH_EXPIRATION_MS:${JWT_REFRESH_EXPIRATION:86400000}}
+  jwtSecret: ${JWT_SECRET:change-me-to-a-long-random-secret-key-min-32-chars}
+  jwtAccessExpirationMs: ${JWT_ACCESS_EXPIRATION:900000}
+  jwtRefreshExpirationMs: ${JWT_REFRESH_EXPIRATION:86400000}
   adminEmail: ${ADMIN_EMAIL:hello@primenova.studio}
   # Sender address on all emails. Defaults to the SMTP username — Gmail rejects
   # messages whose From differs from the authenticated account.
@@ -77,15 +67,13 @@ app:
   # Free keyless IP geolocation (ipwho.is). Disable with GEO_LOOKUP_ENABLED=false for offline dev.
   geoApiUrl: ${GEO_API_URL:https://ipwho.is/}
   geoLookupEnabled: ${GEO_LOOKUP_ENABLED:true}
-  # Frontend base URL — OAuth callback + email verification/reset links isi se bante hain.
-  # Default: same server (single-server mode) — frontend isi :8080 pe serve hota hai.
-  frontendUrl: ${FRONTEND_URL:http://localhost:8080}
+  # Frontend base URL — OAuth callback + email verification/reset links isi se bante hain
+  frontendUrl: ${FRONTEND_URL:http://localhost:5173}
   # Email verification token lifetime + resend cooldown (anti-spam).
   verificationTokenExpiryHours: ${VERIFICATION_TOKEN_EXPIRY_HOURS:24}
   emailResendCooldownSeconds: ${EMAIL_RESEND_COOLDOWN_SECONDS:60}
-  # CORS allowed origins (comma separated). Same-origin calls ko CORS ki zaroorat
-  # nahi; 5173/3000 sirf dev/multi-server setups ke liye rakhe hain.
-  corsOrigins: ${CORS_ORIGINS:http://localhost:8080,http://localhost:5173,http://localhost:3000,http://localhost:80}
+  # CORS allowed origins (comma separated)
+  corsOrigins: ${CORS_ORIGINS:http://localhost:5173,http://localhost:3000,http://localhost:80}
 
 logging:
   # Real-time file log — console (stdout redirect) chunk-buffered hota hai, isliye

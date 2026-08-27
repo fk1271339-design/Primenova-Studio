@@ -6,17 +6,94 @@ import { MenuIcon, XIcon, SunIcon, MoonIcon } from './Icons';
 import { API_BASE_URL, BACKEND_ORIGIN } from '../config';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const navItems = [
+interface SubItem {
+  name: string;
+  path: string;
+  desc?: string;
+}
+
+interface NavItem {
+  name: string;
+  path: string;
+  dropdown?: SubItem[];
+}
+
+const navItems: NavItem[] = [
   { name: 'Home', path: '/' },
-  { name: 'Services', path: '/services' },
-  { name: 'Portfolio', path: '/portfolio' },
-  { name: 'About', path: '/about' },
+  {
+    name: 'Services',
+    path: '/services',
+    dropdown: [
+      { name: 'Web Development', path: '/services#web-development', desc: 'Custom high-performance websites' },
+      { name: 'E-Commerce Development', path: '/services#ecommerce', desc: 'Scalable multi-vendor & retail stores' },
+      { name: 'AI Solutions', path: '/services#ai-solutions', desc: 'Applied LLMs & agentic workflows' },
+      { name: 'Mobile Applications', path: '/services#mobile-apps', desc: 'iOS & Android native experiences' },
+      { name: 'UI/UX Design', path: '/services#ui-ux', desc: 'Editorial & responsive design systems' },
+      { name: 'Branding', path: '/services#branding', desc: 'Identity, positioning & visual craft' },
+      { name: 'Automation', path: '/services#automation', desc: 'Business process & workflow automation' },
+      { name: 'Custom Software', path: '/services#custom-software', desc: 'Full-stack enterprise architectures' },
+    ],
+  },
+  {
+    name: 'Solutions',
+    path: '/services',
+    dropdown: [
+      { name: 'Business Websites', path: '/services#business-websites', desc: 'Cinematic corporate presences' },
+      { name: 'E-Commerce', path: '/services#ecommerce', desc: 'Modern storefronts & marketplaces' },
+      { name: 'SaaS Development', path: '/services#saas', desc: 'Scalable multi-tenant cloud platforms' },
+      { name: 'AI Integration', path: '/services#ai-integration', desc: 'Intelligent automation for products' },
+      { name: 'Business Automation', path: '/services#automation', desc: 'Streamline operations & workflows' },
+      { name: 'Custom Web Applications', path: '/services#custom-web-apps', desc: 'Tailored software solutions' },
+    ],
+  },
+  {
+    name: 'Portfolio',
+    path: '/portfolio',
+    dropdown: [
+      { name: 'Featured Projects', path: '/portfolio#all', desc: 'Our most impact-driven work' },
+      { name: 'Web Projects', path: '/portfolio#web', desc: 'High-speed web applications' },
+      { name: 'E-Commerce', path: '/portfolio#ecommerce', desc: 'High-converting online stores' },
+      { name: 'AI Projects', path: '/portfolio#ai', desc: 'Intelligent products & systems' },
+      { name: 'UI/UX', path: '/portfolio#ui-ux', desc: 'Design systems & interfaces' },
+      { name: 'Case Studies', path: '/portfolio#case-studies', desc: 'Deep dive into engineering results' },
+    ],
+  },
+  {
+    name: 'About',
+    path: '/about',
+    dropdown: [
+      { name: 'About PrimeNova', path: '/about#story', desc: 'Our mission, vision & team' },
+      { name: 'Our Process', path: '/about#process', desc: '8-step engineering lifecycle' },
+      { name: 'Why PrimeNova', path: '/about#why-us', desc: 'Performance & design philosophy' },
+      { name: 'Technology Stack', path: '/about#tech-stack', desc: 'Modern full-stack technologies' },
+      { name: 'Our Approach', path: '/about#approach', desc: 'Craftsmanship meets intelligence' },
+    ],
+  },
   { name: 'AI Assistant', path: '/ai-assistant' },
-  { name: 'Pricing', path: '/pricing' },
+  {
+    name: 'Pricing',
+    path: '/pricing',
+    dropdown: [
+      { name: 'Website Pricing', path: '/pricing#website', desc: 'Starter & Business websites' },
+      { name: 'E-Commerce Pricing', path: '/pricing#ecommerce', desc: 'Retail & marketplace packages' },
+      { name: 'AI Solutions Pricing', path: '/pricing#ai', desc: 'Custom AI agent integrations' },
+      { name: 'Custom Software Pricing', path: '/pricing#custom', desc: 'Tailored enterprise builds' },
+      { name: 'Maintenance Plans', path: '/pricing#maintenance', desc: 'SLA support & optimization' },
+    ],
+  },
+  {
+    name: 'Resources',
+    path: '/about',
+    dropdown: [
+      { name: 'FAQ', path: '/about#faq', desc: 'Frequently asked questions' },
+      { name: 'Technology', path: '/about#tech-stack', desc: 'Our tech stack breakdown' },
+      { name: 'Blog/Insights', path: '/about#insights', desc: 'Latest digital agency insights' },
+      { name: 'Project Guide', path: '/about#process', desc: 'How to prepare for a project' },
+    ],
+  },
   { name: 'Contact', path: '/contact' },
 ];
 
-// ── Arrow Icon for CTA ──
 const ArrowRightIcon = ({ className }: { className?: string }) => (
   <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
     <path d="M5 12h14M12 5l7 7-7 7" />
@@ -30,24 +107,25 @@ const Navbar: React.FC = () => {
   const navigate = useNavigate();
   const [isOpen, setIsOpen] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [expandedMobileCategory, setExpandedMobileCategory] = useState<string | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
-  // ── Scroll Detection ──
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 30);
+    const handleScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // ── Close dropdown on outside click ──
   useEffect(() => {
-    const handleClick = () => setShowProfileMenu(false);
-    if (showProfileMenu) {
-      document.addEventListener('click', handleClick);
-      return () => document.removeEventListener('click', handleClick);
-    }
-  }, [showProfileMenu]);
+    const handleClick = () => {
+      setShowProfileMenu(false);
+      setActiveDropdown(null);
+    };
+    document.addEventListener('click', handleClick);
+    return () => document.removeEventListener('click', handleClick);
+  }, []);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -59,81 +137,145 @@ const Navbar: React.FC = () => {
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-4 pt-4">
+      <header className="fixed top-0 left-0 right-0 z-50 flex justify-center px-3 sm:px-4 pt-3 sm:pt-4">
         <motion.nav
           initial={false}
           animate={{
-            paddingTop: scrolled ? 6 : 10,
-            paddingBottom: scrolled ? 6 : 10,
+            paddingTop: scrolled ? 6 : 8,
+            paddingBottom: scrolled ? 6 : 8,
           }}
-          transition={{ duration: 0.3, ease: 'easeOut' }}
-          className={`hidden lg:flex items-center gap-1 px-6 rounded-full transition-all duration-500 max-w-[980px] w-full border ${
+          transition={{ duration: 0.25, ease: 'easeOut' }}
+          className={`hidden xl:flex items-center gap-0.5 px-5 rounded-full transition-all duration-500 max-w-[1180px] w-full border ${
             scrolled
-              ? 'border-white/[0.08] bg-black/75 shadow-xl shadow-black/45'
-              : 'border-white/[0.05] bg-white/[0.02] shadow-lg shadow-black/15'
+              ? 'border-white/[0.08] bg-black/85 shadow-2xl shadow-black/60'
+              : 'border-white/[0.05] bg-white/[0.02] shadow-lg shadow-black/20'
           }`}
           style={{
-            backdropFilter: scrolled ? 'blur(24px) saturate(160%)' : 'blur(18px) saturate(140%)',
-            WebkitBackdropFilter: scrolled ? 'blur(24px) saturate(160%)' : 'blur(18px) saturate(140%)',
+            backdropFilter: scrolled ? 'blur(28px) saturate(180%)' : 'blur(20px) saturate(140%)',
+            WebkitBackdropFilter: scrolled ? 'blur(28px) saturate(180%)' : 'blur(20px) saturate(140%)',
           }}
         >
-          {/* ── Logo ── */}
-          <Link
-            to="/"
-            className="flex items-center gap-2.5 mr-8 group"
-          >
+          {/* Logo */}
+          <Link to="/" className="flex items-center gap-2 mr-6 group shrink-0">
             <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 shadow-[0_0_8px_rgba(251,146,60,0.4)] group-hover:shadow-[0_0_14px_rgba(251,146,60,0.6)] transition-shadow duration-300" />
-            <span className="text-white font-bold tracking-[0.18em] text-[13px] font-display group-hover:drop-shadow-[0_0_6px_rgba(245,158,11,0.5)] transition-all duration-300 group-hover:scale-[1.03] origin-left">
+            <span className="text-white font-bold tracking-[0.18em] text-[13px] font-display group-hover:drop-shadow-[0_0_6px_rgba(245,158,11,0.5)] transition-all duration-300">
               PRIMENOVA
             </span>
           </Link>
 
-          {/* ── Nav Links ── */}
-          <div className="flex items-center gap-0.5 flex-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.name}
-                to={item.path}
-                className="relative px-3.5 py-2 text-[13px] font-medium transition-all duration-250 rounded-lg group"
-              >
-                {/* Active indicator — glowing underline */}
-                {isActive(item.path) && (
-                  <motion.span
-                    layoutId="navIndicator"
-                    className="absolute bottom-0.5 left-3 right-3 h-[2px] rounded-full bg-gradient-to-r from-amber-400 to-orange-500 shadow-[0_1px_8px_rgba(251,146,60,0.4)]"
-                    transition={{ type: 'spring', stiffness: 400, damping: 35 }}
-                  />
-                )}
-                <span
-                  className={`relative z-10 transition-all duration-250 ${
-                    isActive(item.path)
-                      ? 'text-white font-semibold'
-                      : 'text-white/50 group-hover:text-white/90 group-hover:-translate-y-[1px]'
-                  }`}
+          {/* Desktop Nav Links & Dropdowns */}
+          <div className="flex items-center gap-0.5 flex-1 justify-center">
+            {navItems.map((item) => {
+              const hasDropdown = item.dropdown && item.dropdown.length > 0;
+              const isCurrentActive = isActive(item.path);
+
+              return (
+                <div
+                  key={item.name}
+                  className="relative"
+                  onMouseEnter={() => hasDropdown && setActiveDropdown(item.name)}
+                  onMouseLeave={() => hasDropdown && setActiveDropdown(null)}
                 >
-                  {item.name}
-                </span>
-              </Link>
-            ))}
+                  <Link
+                    to={item.path}
+                    className="relative px-3 py-2 text-[12px] font-medium transition-all duration-250 rounded-lg group flex items-center gap-1"
+                    onClick={(e) => {
+                      if (hasDropdown) {
+                        e.stopPropagation();
+                      }
+                    }}
+                  >
+                    {isCurrentActive && (
+                      <motion.span
+                        layoutId="navIndicator"
+                        className="absolute bottom-0.5 left-2.5 right-2.5 h-[2px] rounded-full bg-gradient-to-r from-amber-400 to-orange-500 shadow-[0_1px_8px_rgba(251,146,60,0.4)]"
+                        transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                      />
+                    )}
+                    <span
+                      className={`relative z-10 transition-colors ${
+                        isCurrentActive ? 'text-white font-semibold' : 'text-white/60 group-hover:text-white'
+                      }`}
+                    >
+                      {item.name}
+                    </span>
+                    {hasDropdown && (
+                      <svg
+                        className={`w-3 h-3 text-white/30 transition-transform duration-200 ${
+                          activeDropdown === item.name ? 'rotate-180 text-amber-400' : ''
+                        }`}
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke="currentColor"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    )}
+                  </Link>
+
+                  {/* Mega-Menu Dropdown Panel */}
+                  <AnimatePresence>
+                    {hasDropdown && activeDropdown === item.name && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                        transition={{ duration: 0.15, ease: 'easeOut' }}
+                        className="absolute left-1/2 -translate-x-1/2 top-[calc(100%+6px)] w-80 p-2 rounded-2xl border border-white/[0.08] shadow-2xl shadow-black/80 z-50 overflow-hidden"
+                        style={{
+                          background: 'rgba(9,9,11,0.95)',
+                          backdropFilter: 'blur(28px)',
+                        }}
+                      >
+                        <div className="grid grid-cols-1 gap-1">
+                          {item.dropdown?.map((sub) => (
+                            <Link
+                              key={sub.name}
+                              to={sub.path}
+                              onClick={() => setActiveDropdown(null)}
+                              className="group flex flex-col p-2.5 rounded-xl hover:bg-white/[0.06] transition-colors"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="text-[12px] font-semibold text-white/90 group-hover:text-amber-400 transition-colors">
+                                  {sub.name}
+                                </span>
+                                <svg
+                                  className="w-3 h-3 text-white/20 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  stroke="currentColor"
+                                >
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                </svg>
+                              </div>
+                              {sub.desc && (
+                                <span className="text-[10px] text-white/40 font-light mt-0.5 line-clamp-1">
+                                  {sub.desc}
+                                </span>
+                              )}
+                            </Link>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              );
+            })}
           </div>
 
-          {/* ── Right Controls ── */}
-          <div className="flex items-center gap-2">
-            {/* Theme Toggle */}
+          {/* Controls Right */}
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={toggleTheme}
-              className="relative p-2 rounded-lg text-white/40 hover:text-amber-400 hover:bg-white/[0.04] transition-all duration-300 group"
+              className="p-2 rounded-lg text-white/40 hover:text-amber-400 hover:bg-white/[0.04] transition-all"
               aria-label="Toggle Theme"
             >
-              <span className="block group-hover:rotate-[20deg] transition-transform duration-500">
-                {darkMode ? <SunIcon className="w-[18px] h-[18px]" /> : <MoonIcon className="w-[18px] h-[18px]" />}
-              </span>
+              {darkMode ? <SunIcon className="w-[18px] h-[18px]" /> : <MoonIcon className="w-[18px] h-[18px]" />}
             </button>
 
-            {/* Separator */}
-            <div className="w-px h-5 bg-white/[0.06] mx-1" />
+            <div className="w-px h-4 bg-white/[0.08] mx-0.5" />
 
-            {/* Auth Section */}
             {user ? (
               <div className="relative">
                 <button
@@ -141,7 +283,7 @@ const Navbar: React.FC = () => {
                     e.stopPropagation();
                     setShowProfileMenu(!showProfileMenu);
                   }}
-                  className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.08] hover:border-white/[0.1] transition-all duration-250 group"
+                  className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-xl bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all"
                 >
                   <div className="relative">
                     <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-amber-400 to-rose-500 flex items-center justify-center text-black font-bold text-[11px] overflow-hidden shadow-sm">
@@ -151,78 +293,62 @@ const Navbar: React.FC = () => {
                         user.fullName.charAt(0).toUpperCase()
                       )}
                     </div>
-                    {/* Online indicator */}
-                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-[2px] border-black/80 shadow-[0_0_4px_rgba(16,185,129,0.6)]" />
+                    <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 border-[2px] border-black/80" />
                   </div>
-                  <span className="text-[12px] font-medium text-white/80 max-w-[72px] truncate group-hover:text-white transition-colors">
+                  <span className="text-[12px] font-medium text-white/80 max-w-[80px] truncate">
                     {user.fullName.split(' ')[0]}
                   </span>
-                  <svg className={`w-3 h-3 text-white/30 transition-transform duration-200 ${showProfileMenu ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className={`w-3 h-3 text-white/30 transition-transform ${showProfileMenu ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
 
-                {/* ── Profile Dropdown ── */}
+                {/* Profile Dropdown */}
                 <AnimatePresence>
                   {showProfileMenu && (
                     <motion.div
                       initial={{ opacity: 0, y: 6, scale: 0.97 }}
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 6, scale: 0.97 }}
-                      transition={{ duration: 0.12, ease: 'easeOut' }}
-                      className="absolute right-0 top-[calc(100%+8px)] w-60 rounded-2xl overflow-hidden border border-white/[0.06] shadow-2xl shadow-black/40 z-50"
-                      style={{
-                        background: 'rgba(12,12,14,0.92)',
-                        backdropFilter: 'blur(24px)',
-                      }}
+                      transition={{ duration: 0.12 }}
+                      className="absolute right-0 top-[calc(100%+8px)] w-60 rounded-2xl overflow-hidden border border-white/[0.08] shadow-2xl z-50"
+                      style={{ background: 'rgba(9,9,11,0.95)', backdropFilter: 'blur(24px)' }}
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {/* User Info */}
-                      <div className="px-4 py-3.5 border-b border-white/[0.06]">
+                      <div className="px-4 py-3 border-b border-white/[0.06]">
                         <p className="text-[13px] font-semibold text-white truncate">{user.fullName}</p>
                         <p className="text-[11px] text-white/40 truncate mt-0.5">{user.email}</p>
-                        <span className="inline-block mt-2 px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 text-[9px] font-bold uppercase tracking-widest border border-amber-500/10">
+                        <span className="inline-block mt-2 px-2 py-0.5 rounded bg-amber-500/10 text-amber-400 text-[9px] font-bold uppercase tracking-widest border border-amber-500/20">
                           {user.role}
                         </span>
                       </div>
 
-                      {/* Menu Links */}
-                      <div className="py-1.5 px-1.5">
+                      <div className="py-1.5 px-1.5 space-y-0.5">
                         <Link
                           to="/profile"
                           onClick={() => setShowProfileMenu(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-white/70 hover:text-white hover:bg-white/[0.04] transition-colors"
+                          className="flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] text-white/70 hover:text-white hover:bg-white/[0.05] transition-colors"
                         >
-                          <svg className="w-4 h-4 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
-                          Profile
+                          <svg className="w-4 h-4 text-white/40" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                          Profile Settings
                         </Link>
 
                         {user.role === 'ADMIN' && (
                           <Link
                             to="/admin/dashboard"
                             onClick={() => setShowProfileMenu(false)}
-                            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-white/70 hover:text-white hover:bg-white/[0.04] transition-colors"
+                            className="flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] text-amber-400 font-semibold bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 transition-colors"
                           >
-                            <svg className="w-4 h-4 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
-                            Dashboard
+                            <svg className="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" /></svg>
+                            Admin Dashboard
                           </Link>
                         )}
-
-                        <Link
-                          to="/ai-assistant"
-                          onClick={() => setShowProfileMenu(false)}
-                          className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-white/70 hover:text-white hover:bg-white/[0.04] transition-colors"
-                        >
-                          <svg className="w-4 h-4 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" /></svg>
-                          Saved Chats
-                        </Link>
                       </div>
 
-                      {/* Logout */}
                       <div className="border-t border-white/[0.06] px-1.5 py-1.5">
                         <button
                           onClick={handleLogout}
-                          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-[13px] text-rose-400/80 hover:text-rose-400 hover:bg-rose-500/[0.06] transition-colors"
+                          className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] text-rose-400 hover:bg-rose-500/10 transition-colors"
                         >
                           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.8}><path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
                           Sign Out
@@ -233,68 +359,57 @@ const Navbar: React.FC = () => {
                 </AnimatePresence>
               </div>
             ) : (
-              <>
-                {/* Sign In — Premium outlined glass button */}
+              <div className="flex items-center gap-2">
                 <button
                   onClick={() => setShowAuthModal(true)}
-                  className="px-4 py-[7px] text-[12px] font-medium text-white/60 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:border-amber-400/30 hover:text-white hover:bg-white/[0.04] hover:shadow-[0_0_12px_rgba(251,146,60,0.08)] transition-all duration-300"
+                  className="px-3.5 py-1.5 text-[12px] font-medium text-white/70 rounded-lg border border-white/[0.08] bg-white/[0.02] hover:border-amber-400/30 hover:text-white transition-all"
                 >
                   Sign In
                 </button>
-
-                {/* Get Started CTA */}
                 <button
                   onClick={() => setShowAuthModal(true)}
-                  className="group flex items-center gap-1.5 px-4.5 py-[7px] text-[12px] font-semibold rounded-lg bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 text-black hover:shadow-[0_4px_20px_rgba(251,146,60,0.35)] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+                  className="group flex items-center gap-1.5 px-4 py-1.5 text-[12px] font-semibold rounded-lg bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 text-black hover:shadow-lg transition-all"
                 >
                   Get Started
-                  <ArrowRightIcon className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform duration-300" />
+                  <ArrowRightIcon className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
                 </button>
-              </>
+              </div>
             )}
           </div>
         </motion.nav>
 
-        {/* ── Mobile Navbar ── */}
+        {/* Mobile Header Bar */}
         <motion.div
           initial={false}
-          animate={{ paddingTop: scrolled ? 10 : 14, paddingBottom: scrolled ? 10 : 14 }}
-          transition={{ duration: 0.3 }}
-          className={`flex lg:hidden w-full max-w-md items-center justify-between px-6 rounded-full border transition-all duration-500 ${
+          animate={{ paddingTop: scrolled ? 8 : 12, paddingBottom: scrolled ? 8 : 12 }}
+          transition={{ duration: 0.25 }}
+          className={`flex xl:hidden w-full max-w-md items-center justify-between px-5 rounded-full border transition-all duration-500 ${
             scrolled
-              ? 'border-white/[0.06] bg-black/70 shadow-xl shadow-black/30'
+              ? 'border-white/[0.08] bg-black/85 shadow-2xl shadow-black/50'
               : 'border-white/[0.04] bg-white/[0.02] shadow-lg shadow-black/10'
           }`}
-          style={{
-            backdropFilter: 'blur(20px) saturate(150%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(150%)',
-          }}
+          style={{ backdropFilter: 'blur(20px) saturate(150%)' }}
         >
-          <Link to="/" className="flex items-center gap-2 group">
-            <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500 shadow-[0_0_8px_rgba(251,146,60,0.4)]" />
+          <Link to="/" className="flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-amber-400 to-rose-500" />
             <span className="text-white font-bold tracking-[0.18em] text-[12px] font-display">PRIMENOVA</span>
           </Link>
 
           <div className="flex items-center gap-1.5">
-            <button
-              onClick={toggleTheme}
-              className="p-2 rounded-lg text-white/40 hover:text-amber-400 transition-colors"
-              aria-label="Toggle Theme"
-            >
-              {darkMode ? <SunIcon className="w-[18px] h-[18px]" /> : <MoonIcon className="w-[18px] h-[18px]" />}
+            <button onClick={toggleTheme} className="p-2 text-white/50 hover:text-amber-400 transition-colors">
+              {darkMode ? <SunIcon className="w-4 h-4" /> : <MoonIcon className="w-4 h-4" />}
             </button>
-
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="p-2 rounded-lg text-white/60 hover:text-white hover:bg-white/[0.05] transition-all"
-              aria-label="Toggle Menu"
+              className="p-2 text-white/70 hover:text-white transition-colors"
+              aria-label="Toggle Navigation Drawer"
             >
               {isOpen ? <XIcon className="w-5 h-5" /> : <MenuIcon className="w-5 h-5" />}
             </button>
           </div>
         </motion.div>
 
-        {/* ── Mobile Drawer ── */}
+        {/* Mobile Navigation Drawer */}
         <AnimatePresence>
           {isOpen && (
             <motion.div
@@ -302,65 +417,96 @@ const Navbar: React.FC = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -15, scale: 0.98 }}
               transition={{ duration: 0.2, ease: 'easeOut' }}
-              className="absolute top-[76px] left-4 right-4 rounded-2xl border border-white/[0.06] p-4 flex flex-col gap-1 z-40 lg:hidden shadow-2xl shadow-black/30"
-              style={{
-                background: 'rgba(10,10,12,0.94)',
-                backdropFilter: 'blur(24px)',
-              }}
+              className="absolute top-[70px] left-3 right-3 max-w-md mx-auto rounded-3xl border border-white/[0.08] p-4 flex flex-col gap-1 z-40 xl:hidden shadow-2xl"
+              style={{ background: 'rgba(9,9,11,0.96)', backdropFilter: 'blur(28px)' }}
             >
-              {navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  to={item.path}
-                  onClick={() => setIsOpen(false)}
-                  className={`py-3 px-4 text-center rounded-xl text-[13px] font-medium transition-all duration-200 ${
-                    isActive(item.path)
-                      ? 'text-white bg-white/[0.05] font-semibold'
-                      : 'text-white/50 hover:text-white hover:bg-white/[0.03]'
-                  }`}
-                >
-                  {item.name}
-                </Link>
-              ))}
+              <div className="max-h-[70vh] overflow-y-auto space-y-1 pr-1">
+                {navItems.map((item) => {
+                  const hasDropdown = item.dropdown && item.dropdown.length > 0;
+                  const isExpanded = expandedMobileCategory === item.name;
 
-              <div className="border-t border-white/[0.06] pt-3 mt-2 flex flex-col gap-2">
+                  return (
+                    <div key={item.name} className="flex flex-col">
+                      <div className="flex items-center justify-between">
+                        <Link
+                          to={item.path}
+                          onClick={() => {
+                            if (!hasDropdown) setIsOpen(false);
+                          }}
+                          className={`py-2.5 px-3 rounded-xl text-[13px] font-medium transition-colors flex-1 ${
+                            isActive(item.path) ? 'text-amber-400 font-semibold' : 'text-white/70 hover:text-white'
+                          }`}
+                        >
+                          {item.name}
+                        </Link>
+                        {hasDropdown && (
+                          <button
+                            onClick={() => setExpandedMobileCategory(isExpanded ? null : item.name)}
+                            className="p-2 text-white/40 hover:text-amber-400"
+                          >
+                            <svg className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180 text-amber-400' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Mobile Accordion Sub-items */}
+                      {hasDropdown && isExpanded && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className="pl-4 border-l border-white/[0.08] my-1 space-y-1"
+                        >
+                          {item.dropdown?.map((sub) => (
+                            <Link
+                              key={sub.name}
+                              to={sub.path}
+                              onClick={() => setIsOpen(false)}
+                              className="block py-2 px-2 text-[12px] text-white/60 hover:text-amber-400"
+                            >
+                              {sub.name}
+                            </Link>
+                          ))}
+                        </motion.div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Mobile Auth Button */}
+              <div className="border-t border-white/[0.08] pt-3 mt-2 flex flex-col gap-2">
                 {user ? (
                   <>
-                    <Link
-                      to="/profile"
-                      onClick={() => setIsOpen(false)}
-                      className="flex items-center justify-center gap-2.5 py-3 px-4 rounded-xl bg-white/[0.04] text-white font-medium text-[13px] transition-colors"
-                    >
-                      <div className="relative">
-                        <div className="w-6 h-6 rounded-md bg-gradient-to-tr from-amber-400 to-rose-500 flex items-center justify-center text-black font-bold text-[10px] overflow-hidden">
-                          {user.avatar ? <img src={user.avatar} alt="" className="w-full h-full object-cover" /> : user.fullName.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 border-[1.5px] border-[#0a0a0c]" />
-                      </div>
-                      {user.fullName}
-                    </Link>
+                    <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-white/[0.04]">
+                      <span className="text-[12px] text-white font-medium">{user.fullName}</span>
+                      <span className="text-[9px] text-amber-400 uppercase font-mono font-bold px-2 py-0.5 rounded bg-amber-500/10">{user.role}</span>
+                    </div>
+                    {user.role === 'ADMIN' && (
+                      <Link
+                        to="/admin/dashboard"
+                        onClick={() => setIsOpen(false)}
+                        className="py-2.5 text-center font-semibold rounded-xl bg-amber-500/20 border border-amber-500/30 text-amber-400 text-[12px]"
+                      >
+                        Admin Dashboard
+                      </Link>
+                    )}
                     <button
                       onClick={() => { handleLogout(); setIsOpen(false); }}
-                      className="py-3 text-center font-medium rounded-xl text-rose-400/80 text-[13px] hover:bg-rose-500/[0.06] transition-colors"
+                      className="py-2.5 text-center font-medium rounded-xl text-rose-400 text-[12px] hover:bg-rose-500/10"
                     >
                       Sign Out
                     </button>
                   </>
                 ) : (
-                  <>
-                    <button
-                      onClick={() => { setIsOpen(false); setShowAuthModal(true); }}
-                      className="py-3 text-center font-medium rounded-xl text-white/70 text-[13px] border border-white/[0.06] hover:bg-white/[0.04] transition-colors"
-                    >
-                      Sign In
-                    </button>
-                    <button
-                      onClick={() => { setIsOpen(false); setShowAuthModal(true); }}
-                      className="py-3 text-center font-semibold rounded-xl bg-gradient-to-r from-amber-400 to-rose-500 text-black text-[13px] shadow-lg transition-all"
-                    >
-                      Get Started →
-                    </button>
-                  </>
+                  <button
+                    onClick={() => { setIsOpen(false); setShowAuthModal(true); }}
+                    className="py-3 text-center font-semibold rounded-xl bg-gradient-to-r from-amber-400 to-rose-500 text-black text-[13px] shadow-lg"
+                  >
+                    Sign In / Get Started →
+                  </button>
                 )}
               </div>
             </motion.div>
@@ -368,7 +514,7 @@ const Navbar: React.FC = () => {
         </AnimatePresence>
       </header>
 
-      {/* ═══ Premium Auth Modal ═══ */}
+      {/* Auth Modal */}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </>
   );

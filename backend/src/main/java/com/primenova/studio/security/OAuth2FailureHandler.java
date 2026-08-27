@@ -42,14 +42,6 @@ public class OAuth2FailureHandler extends SimpleUrlAuthenticationFailureHandler 
     }
 
     private String resolveBaseUrl(HttpServletRequest request) {
-        String referer = request.getHeader("Referer");
-        if (referer != null && (referer.contains("localhost:5173") || referer.contains("127.0.0.1:5173"))) {
-            return "http://localhost:5173";
-        }
-        String origin = request.getHeader("Origin");
-        if (origin != null && (origin.contains("localhost:5173") || origin.contains("127.0.0.1:5173"))) {
-            return "http://localhost:5173";
-        }
-        return (frontendUrl != null && !frontendUrl.isBlank()) ? frontendUrl : "http://localhost:8080";
+        return (frontendUrl != null && !frontendUrl.isBlank()) ? frontendUrl : "http://localhost:5173";
     }
 }

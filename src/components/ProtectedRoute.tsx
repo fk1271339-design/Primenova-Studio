@@ -28,8 +28,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, requiredRole 
   }
 
   if (requiredRole && user.role !== requiredRole) {
-    const fallbackPath = user.role === 'ADMIN' ? '/admin/dashboard' : '/profile';
-    return <Navigate to={fallbackPath} replace />;
+    return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;

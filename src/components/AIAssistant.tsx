@@ -199,15 +199,40 @@ const ThinkingIndicator = () => {
 // ─── QUICK ACTIONS DATA ──────────────────────────────────────
 
 const QUICK_ACTIONS = [
-  { title: "Estimate Website Cost", desc: "Calculate pricing & timeline", icon: "💰", gradient: "from-violet-600/10 to-indigo-600/10" },
-  { title: "AI Consultation", desc: "Explore AI automations", icon: "🤖", gradient: "from-amber-600/10 to-rose-600/10" },
-  { title: "Portfolio Projects", desc: "Browse our case studies", icon: "📂", gradient: "from-blue-600/10 to-cyan-600/10" },
-  { title: "UI/UX Design", desc: "Figma wireframing", icon: "🎨", gradient: "from-pink-600/10 to-rose-600/10" },
-  { title: "Mobile Apps", desc: "iOS & Android solutions", icon: "📱", gradient: "from-emerald-600/10 to-teal-600/10" },
-  { title: "Automation", desc: "Workflow tools & webhooks", icon: "⚡", gradient: "from-purple-600/10 to-violet-600/10" },
-  { title: "Brand Identity", desc: "Logos & guidelines", icon: "✨", gradient: "from-orange-600/10 to-amber-600/10" },
-  { title: "SEO Optimization", desc: "Drive search traffic", icon: "📈", gradient: "from-cyan-600/10 to-blue-600/10" },
+  { title: "Estimate Website Cost", desc: "Calculate pricing & timeline", icon: "💰", gradient: "from-violet-600/10 to-indigo-600/10", explanation: "💰 **Estimate Website Cost** — Is card par click karke aap apni website ka approximate cost aur requirements discuss kar sakte ho." },
+  { title: "AI Consultation", desc: "Explore AI automations", icon: "🤖", gradient: "from-amber-600/10 to-rose-600/10", explanation: "🤖 **AI Consultation** — Isse aap AI solutions, AI automation aur apne business ke liye AI possibilities ke baare mein discuss kar sakte ho." },
+  { title: "Portfolio Projects", desc: "Browse our case studies", icon: "📁", gradient: "from-blue-600/10 to-cyan-600/10", explanation: "📁 **Portfolio Projects** — Is card se aap Primenova Studio ke previous projects aur work explore kar sakte ho." },
+  { title: "UI/UX Design", desc: "Figma wireframing", icon: "🎨", gradient: "from-pink-600/10 to-rose-600/10", explanation: "🎨 **UI/UX Design** — Is option se aap UI/UX design, Figma wireframes aur brand design solutions ke baare mein jaan sakte ho." },
+  { title: "Mobile Apps", desc: "iOS & Android solutions", icon: "📱", gradient: "from-emerald-600/10 to-teal-600/10", explanation: "📱 **Mobile Apps** — Is card se aap iOS aur Android app development solutions aur features ke baare mein discuss kar sakte ho." },
+  { title: "Automation", desc: "Workflow tools & webhooks", icon: "⚡", gradient: "from-purple-600/10 to-violet-600/10", explanation: "⚡ **Automation** — Is option se aap workflow tools, API integrations aur manual tasks automate karne ke solutions explore kar sakte ho." },
 ];
+
+const CARD_RESPONSES: Record<string, { text: string; chips: string[] }> = {
+  "Estimate Website Cost": {
+    text: "Sure! Aap website ka cost estimate karwana chahte ho. 👍\n\nMujhe bas kuch details batao — website kis type ki hai, kitne pages chahiye aur kya special features chahiye.\n\nMain uske according aapko estimate samjhane mein help karunga.",
+    chips: ["Starter Website", "Business Site", "E-commerce Store"]
+  },
+  "AI Consultation": {
+    text: "Great! 🤖\n\nAgar aap apne business mein AI use karna chahte ho, toh hum AI automation, AI assistants aur custom AI solutions explore kar sakte hain.\n\nAap mujhe batao aapka business kya karta hai.",
+    chips: ["Custom AI Bot", "Workflow Automation", "LLM Integration"]
+  },
+  "Portfolio Projects": {
+    text: "Sure! 📁\n\nYahan se aap Primenova Studio ke projects aur previous work explore kar sakte ho.\n\nAap kis type ka project dekhna chahoge?",
+    chips: ["Web Apps", "SaaS Projects", "UI/UX Case Studies"]
+  },
+  "UI/UX Design": {
+    text: "Awesome! 🎨\n\nHum modern, interactive aur user-friendly UI/UX design deliver karte hain.\n\nAapko dashboard design, mobile app design, ya website UI review karwana hai?",
+    chips: ["Figma Prototype", "UI Review", "Design System"]
+  },
+  "Mobile Apps": {
+    text: "Perfect! 📱\n\nHum React Native aur Flutter se fast aur responsive mobile apps build karte hain.\n\nAapka app idea kya hai — Android, iOS ya dono ke liye?",
+    chips: ["iOS App", "Android App", "Cross-Platform"]
+  },
+  "Automation": {
+    text: "Superb! ⚡\n\nHum workflow automation, webhooks aur custom backend APIs integrate karke aapka manual kaam zero kar sakte hain.\n\nAap kis process ko automate karna chahte ho?",
+    chips: ["API Integration", "Webhook Setup", "Task Automation"]
+  }
+};
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────
 
@@ -215,16 +240,11 @@ const AIAssistant: React.FC = () => {
   const { user } = useAuth();
   const [memory, setLocalMemory] = useState<NovaMemory>(getMemory);
 
-  const initialMsg: Message = {
-    id: genId(),
-    sender: 'ai',
-    text: getInitialGreeting(memory, user?.fullName),
-    displayText: getInitialGreeting(memory, user?.fullName),
-    timestamp: new Date(),
-    isStreaming: false,
-  };
-
-  const [messages, setMessages] = useState<Message[]>([initialMsg]);
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [introStep, setIntroStep] = useState(0);
+  const [introFinished, setIntroFinished] = useState(false);
+  const [visibleCardsCount, setVisibleCardsCount] = useState(0);
+  const [activeCardTitle, setActiveCardTitle] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [suggestionChips, setSuggestionChips] = useState<string[]>(getInitialChips(memory));
@@ -243,15 +263,14 @@ const AIAssistant: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isThinking, scrollToBottom]);
+  }, [messages, isThinking, visibleCardsCount, scrollToBottom]);
 
   // ── Streaming text effect ──
-  const streamText = useCallback((fullText: string, msgId: string) => {
+  const streamText = useCallback((fullText: string, msgId: string, onComplete?: () => void, charDelay = 28) => {
     let charIndex = 0;
-    const speed = 10; // ms per character
 
     const interval = setInterval(() => {
-      charIndex += 3; // 3 chars at a time for fast premium streaming
+      charIndex += 1; // 1 char at a time for smooth, readable streaming
       if (charIndex >= fullText.length) {
         charIndex = fullText.length;
         clearInterval(interval);
@@ -260,6 +279,7 @@ const AIAssistant: React.FC = () => {
             m.id === msgId ? { ...m, displayText: fullText, isStreaming: false } : m
           )
         );
+        if (onComplete) onComplete();
       } else {
         setMessages(prev =>
           prev.map(m =>
@@ -267,10 +287,175 @@ const AIAssistant: React.FC = () => {
           )
         );
       }
-    }, speed);
+    }, charDelay);
 
     return () => clearInterval(interval);
   }, []);
+
+
+
+  // ── INTRO SEQUENCE CONFIG ──
+  const INTRO_SEQUENCE = useRef([
+    // Step 0: Typing 1
+    { type: 'typing', duration: 1200 },
+    // Step 1: Msg 1
+    { type: 'msg', text: "Hey! I'm Novee 👋", duration: 2200 },
+    // Step 2: Typing 2
+    { type: 'typing', duration: 1200 },
+    // Step 3: Msg 2
+    { type: 'msg', text: "Main Primenova Studio ka AI Assistant hoon.", duration: 2500 },
+    // Step 4: Typing 3
+    { type: 'typing', duration: 1200 },
+    // Step 5: Msg 3
+    { type: 'msg', text: "Main aapko hamari services, projects aur solutions explore karne mein help kar sakta hoon.", duration: 3200 },
+    // Step 6: Typing 4
+    { type: 'typing', duration: 1200 },
+    // Step 7: Msg 4
+    { type: 'msg', text: "Chaliye, main aapko quickly bataata hoon ki aap neeche diye gaye options se kya explore kar sakte ho.", duration: 3200 },
+
+    // Step 8: Typing Card 1
+    { type: 'typing', duration: 1200 },
+    // Step 9: Card 1 Explain + Reveal
+    { type: 'card_explain', cardIndex: 0, text: QUICK_ACTIONS[0].explanation, duration: 3500 },
+
+    // Step 10: Typing Card 2
+    { type: 'typing', duration: 1200 },
+    // Step 11: Card 2 Explain + Reveal
+    { type: 'card_explain', cardIndex: 1, text: QUICK_ACTIONS[1].explanation, duration: 3500 },
+
+    // Step 12: Typing Card 3
+    { type: 'typing', duration: 1200 },
+    // Step 13: Card 3 Explain + Reveal
+    { type: 'card_explain', cardIndex: 2, text: QUICK_ACTIONS[2].explanation, duration: 3500 },
+
+    // Step 14: Typing Card 4
+    { type: 'typing', duration: 1200 },
+    // Step 15: Card 4 Explain + Reveal
+    { type: 'card_explain', cardIndex: 3, text: QUICK_ACTIONS[3].explanation, duration: 3500 },
+
+    // Step 16: Typing Card 5
+    { type: 'typing', duration: 1200 },
+    // Step 17: Card 5 Explain + Reveal
+    { type: 'card_explain', cardIndex: 4, text: QUICK_ACTIONS[4].explanation, duration: 3500 },
+
+    // Step 18: Typing Card 6
+    { type: 'typing', duration: 1200 },
+    // Step 19: Card 6 Explain + Reveal
+    { type: 'card_explain', cardIndex: 5, text: QUICK_ACTIONS[5].explanation, duration: 3500 },
+
+    // Step 20: Typing Final Msg
+    { type: 'typing', duration: 1000 },
+    // Step 21: Final Msg
+    { type: 'msg', text: "Ab aap kisi bhi option par click karke explore kar sakte ho. 😊", duration: 1800 },
+  ]).current;
+
+  // Deterministic State Machine for Onboarding Sequence
+  useEffect(() => {
+    if (introStep >= INTRO_SEQUENCE.length) {
+      setIntroFinished(true);
+      setVisibleCardsCount(6);
+      setIsThinking(false);
+      return;
+    }
+
+    const step = INTRO_SEQUENCE[introStep];
+
+    const timer = setTimeout(() => {
+      if (step.type === 'typing') {
+        setIsThinking(true);
+      } else if (step.type === 'msg') {
+        setIsThinking(false);
+        if (step.text) {
+          const msgObj: Message = {
+            id: genId(),
+            sender: 'ai',
+            text: step.text,
+            displayText: step.text,
+            timestamp: new Date(),
+            isStreaming: false,
+          };
+          setMessages(prev => [...prev, msgObj]);
+        }
+      } else if (step.type === 'card_explain') {
+        setIsThinking(false);
+        if (step.text) {
+          const msgObj: Message = {
+            id: genId(),
+            sender: 'ai',
+            text: step.text,
+            displayText: step.text,
+            timestamp: new Date(),
+            isStreaming: false,
+          };
+          setMessages(prev => [...prev, msgObj]);
+        }
+        if (step.cardIndex !== undefined) {
+          setVisibleCardsCount(step.cardIndex + 1);
+        }
+      }
+
+      setIntroStep(prev => prev + 1);
+    }, step.duration);
+
+    return () => clearTimeout(timer);
+  }, [introStep]);
+
+  // Safety Fallback Timer: guarantees all 6 cards become visible after 65s
+  useEffect(() => {
+    const fallbackTimer = setTimeout(() => {
+      setVisibleCardsCount(6);
+      setIntroFinished(true);
+    }, 65000);
+
+    return () => clearTimeout(fallbackTimer);
+  }, []);
+
+  // ── Card click handler with tailored responses ──
+  const handleCardClick = useCallback((title: string) => {
+    if (isThinking) return;
+
+    setActiveCardTitle(title);
+    setTimeout(() => setActiveCardTitle(null), 500);
+
+    const userMsg: Message = {
+      id: genId(),
+      sender: 'user',
+      text: title,
+      displayText: title,
+      timestamp: new Date(),
+      isStreaming: false,
+    };
+
+    setMessages(prev => [...prev, userMsg]);
+    setIsThinking(true);
+
+    const cardResponse = CARD_RESPONSES[title];
+    const thinkTime = 1400;
+
+    setTimeout(() => {
+      const currentMemory = getMemory();
+      const aiMsgId = genId();
+
+      const simpleHistory = messages.map((m) => ({ sender: m.sender, text: m.text }));
+      const responseText = cardResponse ? cardResponse.text : generateResponse(title, currentMemory, simpleHistory).text;
+      const chips = cardResponse ? cardResponse.chips : generateResponse(title, currentMemory, simpleHistory).suggestionChips;
+
+      const aiMsg: Message = {
+        id: aiMsgId,
+        sender: 'ai',
+        text: responseText,
+        displayText: '',
+        timestamp: new Date(),
+        isStreaming: true,
+      };
+
+      setMessages(prev => [...prev, aiMsg]);
+      setIsThinking(false);
+      setSuggestionChips(chips);
+
+      streamText(responseText, aiMsgId, undefined, 28);
+    }, thinkTime);
+  }, [isThinking, messages, streamText]);
 
   // ── Send message handler ──
   const handleSendMessage = useCallback((text: string) => {
@@ -299,7 +484,8 @@ const AIAssistant: React.FC = () => {
         currentMemory.askedForName = true;
       }
 
-      const response = generateResponse(text, currentMemory);
+      const simpleHistory = [...messages, userMsg].map((m) => ({ sender: m.sender, text: m.text }));
+      const response = generateResponse(text, currentMemory, simpleHistory);
       setLocalMemory(getMemory());
 
       const aiMsgId = genId();
@@ -319,7 +505,7 @@ const AIAssistant: React.FC = () => {
       // Start streaming
       streamText(response.text, aiMsgId);
     }, thinkTime);
-  }, [isThinking, streamText]);
+  }, [isThinking, messages, streamText]);
 
   // ── Copy message ──
   const handleCopy = useCallback((msgId: string, text: string) => {
@@ -359,14 +545,10 @@ const AIAssistant: React.FC = () => {
     clearMemory();
     const freshMemory = getMemory();
     setLocalMemory(freshMemory);
-    setMessages([{
-      id: genId(),
-      sender: 'ai',
-      text: getInitialGreeting(freshMemory),
-      displayText: getInitialGreeting(freshMemory),
-      timestamp: new Date(),
-      isStreaming: false,
-    }]);
+    setMessages([]);
+    setIntroFinished(false);
+    setVisibleCardsCount(0);
+    setActiveCardTitle(null);
     setSuggestionChips(getInitialChips(freshMemory));
   }, []);
 
@@ -376,17 +558,17 @@ const AIAssistant: React.FC = () => {
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-[#070709]">
         {/* Animated Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:32px_32px] opacity-75" />
-        
+
         {/* Gradient Orbs */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-[380px] bg-gradient-to-b from-violet-900/10 via-purple-900/3 to-transparent blur-[120px] rounded-full pointer-events-none animate-pulse duration-10000" />
         <div className="absolute bottom-10 right-10 w-[280px] h-[280px] bg-amber-500/[0.02] blur-[100px] rounded-full pointer-events-none" />
         <div className="absolute top-1/3 left-10 w-[220px] h-[220px] bg-indigo-500/[0.02] blur-[90px] rounded-full pointer-events-none" />
-        
+
         {/* SVG Noise Filter Overlay */}
         <div className="absolute inset-0 opacity-[0.02] mix-blend-overlay" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
         }} />
-        
+
         {/* Floating Particles */}
         <Particles />
       </div>
@@ -411,10 +593,7 @@ const AIAssistant: React.FC = () => {
           transition={{ delay: 0.1, duration: 0.5 }}
           className="text-3xl sm:text-5xl font-extrabold font-display leading-tight text-white mb-5 tracking-tight"
         >
-          Meet <span className="bg-gradient-to-r from-violet-400 via-purple-400 to-indigo-400 bg-clip-text text-transparent">Nova</span>
-          <span className="block text-lg sm:text-xl font-normal text-slate-300 mt-2">
-            Your Intelligent AI Design & Development Consultant
-          </span>
+          Meet your <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 bg-clip-text text-transparent">always-on</span> digital assistant.
         </m.h2>
 
         {/* Description */}
@@ -434,14 +613,14 @@ const AIAssistant: React.FC = () => {
           transition={{ delay: 0.25, duration: 0.5 }}
           className="flex items-center gap-3 mb-[35px]"
         >
-          <button 
-            onClick={() => inputRef.current?.focus()} 
+          <button
+            onClick={() => inputRef.current?.focus()}
             className="flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold text-xs hover:shadow-[0_0_15px_rgba(109,40,217,0.35)] hover:scale-105 active:scale-95 transition-all duration-300"
           >
             ✨ Try Nova
           </button>
-          <a 
-            href="/portfolio" 
+          <a
+            href="/portfolio"
             className="flex items-center gap-2 px-5 py-2 rounded-full bg-white/[0.04] border border-white/10 text-white font-semibold text-xs hover:bg-white/[0.08] hover:scale-105 active:scale-95 transition-all duration-300"
           >
             📂 View Portfolio
@@ -454,18 +633,18 @@ const AIAssistant: React.FC = () => {
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3, duration: 0.6 }}
-        className="relative z-10 w-full max-w-4xl rounded-[28px] overflow-hidden flex flex-col shadow-2xl p-[1px] bg-gradient-to-b from-white/10 to-white/5 mb-24"
+        className="relative z-10 w-full max-w-5xl rounded-[28px] overflow-hidden flex flex-col shadow-2xl p-[1px] bg-gradient-to-b from-white/10 to-white/5 mb-24"
       >
-        <div 
+        <div
           className="w-full rounded-[27px] overflow-hidden flex flex-col"
           style={{
             background: 'rgba(10, 10, 12, 0.82)',
             backdropFilter: 'blur(12px)',
-            height: 'min(640px, 70vh)',
+            height: 'min(740px, 78vh)',
           }}
         >
           {/* AI Header */}
-          <div className="px-5 py-3.5 border-b border-white/5 flex items-center justify-between shrink-0 bg-white/[0.01]">
+          <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between shrink-0 bg-white/[0.01]">
             <div className="flex items-center gap-3">
               {/* Redesigned Avatar */}
               <div className="relative">
@@ -479,7 +658,7 @@ const AIAssistant: React.FC = () => {
               </div>
               <div>
                 <div className="font-semibold text-white text-sm flex items-center gap-1.5">
-                  Nova
+                  Novee
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-400 font-bold border border-violet-500/20">
                     V2
                   </span>
@@ -506,7 +685,7 @@ const AIAssistant: React.FC = () => {
           </div>
 
           {/* Messages Body */}
-          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-5 flex flex-col gap-5 scroll-smooth">
+          <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-5 scroll-smooth">
             <AP initial={false}>
               {messages.map((msg) => (
                 <m.div
@@ -523,14 +702,13 @@ const AIAssistant: React.FC = () => {
                     </div>
                   )}
 
-                  <div className={`flex flex-col max-w-[80%] ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`flex flex-col max-w-[82%] ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
                     {/* Message Bubble */}
                     <div
-                      className={`px-4 py-3 text-sm leading-relaxed shadow-sm ${
-                        msg.sender === 'user'
-                          ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-2xl rounded-tr-md font-medium'
-                          : 'bg-white/[0.03] border border-white/5 text-white rounded-2xl rounded-tl-md shadow-lg'
-                      }`}
+                      className={`px-4 py-3 text-sm sm:text-[14.5px] leading-relaxed shadow-sm ${msg.sender === 'user'
+                        ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-2xl rounded-tr-md font-medium'
+                        : 'bg-white/[0.03] border border-white/5 text-white rounded-2xl rounded-tl-md shadow-lg'
+                        }`}
                     >
                       {msg.sender === 'ai' ? (
                         <div className="space-y-0.5">
@@ -568,9 +746,8 @@ const AIAssistant: React.FC = () => {
                           {/* Like */}
                           <button
                             onClick={() => handleFeedback(msg.id, 'like')}
-                            className={`p-1 rounded hover:bg-white/5 transition-colors ${
-                              msg.liked ? 'text-emerald-500' : 'text-slate-500 hover:text-slate-300'
-                            }`}
+                            className={`p-1 rounded hover:bg-white/5 transition-colors ${msg.liked ? 'text-emerald-500' : 'text-slate-500 hover:text-slate-300'
+                              }`}
                             title="Helpful"
                           >
                             <ThumbsUpIcon className="w-3 h-3" />
@@ -579,9 +756,8 @@ const AIAssistant: React.FC = () => {
                           {/* Dislike */}
                           <button
                             onClick={() => handleFeedback(msg.id, 'dislike')}
-                            className={`p-1 rounded hover:bg-white/5 transition-colors ${
-                              msg.disliked ? 'text-rose-500' : 'text-slate-500 hover:text-slate-300'
-                            }`}
+                            className={`p-1 rounded hover:bg-white/5 transition-colors ${msg.disliked ? 'text-rose-500' : 'text-slate-500 hover:text-slate-300'
+                              }`}
                             title="Not helpful"
                           >
                             <ThumbsDownIcon className="w-3 h-3" />
@@ -629,26 +805,31 @@ const AIAssistant: React.FC = () => {
             )}
           </div>
 
-          {/* ── Quick Actions (Redesigned as Gradient Cards) ── */}
-          {messages.length <= 1 && !isThinking && (
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 px-5 py-4 border-t border-white/5 bg-white/[0.01] overflow-x-auto shrink-0 select-none">
-              {QUICK_ACTIONS.map((action) => (
-                <button
+          {/* ── Quick Actions (Gradual One-by-One Reveal & Interactive) ── */}
+          {visibleCardsCount > 0 && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 px-4 py-2 border-t border-white/5 bg-white/[0.01] overflow-x-auto shrink-0 select-none">
+              {QUICK_ACTIONS.slice(0, visibleCardsCount).map((action) => (
+                <m.button
                   key={action.title}
-                  onClick={() => handleSendMessage(action.title)}
+                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                  onClick={() => handleCardClick(action.title)}
                   disabled={isThinking}
-                  className={`p-3 rounded-2xl border border-white/5 hover:border-violet-500/30 transition-all duration-300 text-left bg-gradient-to-br ${action.gradient} hover:scale-[1.02] active:scale-95 group shrink-0`}
+                  className={`px-2.5 py-2 rounded-xl border border-white/5 hover:border-violet-500/40 transition-all duration-300 text-left bg-gradient-to-br ${action.gradient} hover:scale-[1.02] active:scale-95 group shrink-0 ${
+                    activeCardTitle === action.title ? 'ring-2 ring-violet-500/60 scale-95 border-violet-500' : ''
+                  }`}
                 >
-                  <div className="text-lg mb-1">{action.icon}</div>
-                  <div className="text-[11px] font-bold text-white group-hover:text-violet-400 transition-colors whitespace-nowrap overflow-hidden text-ellipsis">{action.title}</div>
-                  <div className="text-[9px] text-slate-400 mt-0.5 leading-tight line-clamp-1">{action.desc}</div>
-                </button>
+                  <div className="text-sm mb-0.5">{action.icon}</div>
+                  <div className="text-[10px] font-bold text-white group-hover:text-violet-400 transition-colors whitespace-nowrap overflow-hidden text-ellipsis">{action.title}</div>
+                  <div className="text-[8.5px] text-slate-400 mt-0.5 leading-tight line-clamp-1">{action.desc}</div>
+                </m.button>
               ))}
             </div>
           )}
 
-          {/* Standard Suggestion Chips (Used mid-conversation instead of huge cards) */}
-          {(messages.length > 1 || isThinking) && (
+          {/* Standard Suggestion Chips (Used mid-conversation after user interacts) */}
+          {messages.some(m => m.sender === 'user') && !isThinking && (
             <div className="px-5 py-2.5 border-t border-white/5 flex gap-2 overflow-x-auto scrollbar-hide shrink-0">
               <AP mode="popLayout">
                 {suggestionChips.slice(0, 5).map((chip) => (
@@ -680,12 +861,12 @@ const AIAssistant: React.FC = () => {
             <div className="relative flex items-center bg-white/[0.02] border border-white/5 focus-within:border-violet-500/40 focus-within:ring-1 focus-within:ring-violet-500/20 rounded-2xl p-1.5 transition-all duration-300 shadow-inner">
               {/* Attachment icon */}
               <button type="button" className="p-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-colors" title="Add attachment">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
               </button>
-              
+
               {/* Voice icon */}
               <button type="button" className="p-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-colors" title="Voice input">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" /></svg>
               </button>
 
               <input
@@ -693,14 +874,14 @@ const AIAssistant: React.FC = () => {
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder={isThinking ? 'Thinking...' : 'Ask Nova anything...'}
+                placeholder={isThinking ? 'Thinking...' : 'Ask Novee anything...'}
                 disabled={isThinking}
                 className="flex-1 px-3 bg-transparent text-white placeholder:text-slate-500 text-sm focus:outline-none disabled:opacity-60"
               />
-              
+
               {/* Emoji icon */}
               <button type="button" className="p-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-colors mr-1" title="Emojis">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" x2="9.01" y1="9" y2="9"/><line x1="15" x2="15.01" y1="9" y2="9"/></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" x2="9.01" y1="9" y2="9" /><line x1="15" x2="15.01" y1="9" y2="9" /></svg>
               </button>
 
               {/* Send button */}
@@ -723,7 +904,7 @@ const AIAssistant: React.FC = () => {
         transition={{ delay: 0.8 }}
         className="relative z-10 text-[11px] text-slate-600 mt-4 text-center pb-8"
       >
-        Nova is an AI consultant and may occasionally produce inaccurate information. • Powered by PrimeNova Studio
+        Novee is an AI consultant and may occasionally produce inaccurate information. • Powered by PrimeNova Studio
       </m.p>
     </section>
   );

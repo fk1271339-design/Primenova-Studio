@@ -172,6 +172,18 @@ const ProfilePage: React.FC = () => {
                 {user.provider}
               </span>
             </div>
+
+            {user.role === 'ADMIN' && (
+              <button
+                onClick={() => navigate('/admin/dashboard')}
+                className="mt-4 w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-black font-bold text-xs shadow-md hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+                </svg>
+                Admin Dashboard
+              </button>
+            )}
           </motion.div>
 
           {/* Navigation Links */}

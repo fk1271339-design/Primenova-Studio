@@ -1,17 +1,20 @@
 // ═══════════════════════════════════════════════════════════════
-// novaEngine.ts — Core AI Logic Engine for Nova Consultant
+// novaEngine.ts — Advanced AI Website Consultant Engine for Novee
 // ═══════════════════════════════════════════════════════════════
+import { portfolioData } from '../data/portfolioData';
 
+// ─── TYPES & MEMORY STRUCTURE ──────────────────────────────────
 
-// ─── TYPES ───────────────────────────────────────────────────
+export type Language = 'hinglish' | 'hindi' | 'english';
 
 export interface NovaMemory {
   userName: string | null;
   projectType: string | null;
+  industry: string | null;
   budget: string | null;
-  timeline: string | null;
-  preferredTech: string | null;
-  businessType: string | null;
+  preferredLanguage: Language | null;
+  extractedFeatures: string[];
+  pageTypePreference: 'single-page' | 'multi-page' | 'flexible' | null;
   conversationContext: string;
   askedForName: boolean;
   messageCount: number;
@@ -24,24 +27,42 @@ export interface NovaResponse {
   intent: string;
 }
 
-// ─── MEMORY MANAGEMENT ──────────────────────────────────────
+export interface SimpleMessage {
+  sender: 'user' | 'ai';
+  text: string;
+}
 
 const MEMORY_KEY = 'nova_memory';
 
 export function getMemory(): NovaMemory {
   try {
     const stored = localStorage.getItem(MEMORY_KEY);
-    if (stored) return JSON.parse(stored);
+    if (stored) {
+      const parsed = JSON.parse(stored);
+      return {
+        userName: parsed.userName || null,
+        projectType: parsed.projectType || null,
+        industry: parsed.industry || null,
+        budget: parsed.budget || null,
+        preferredLanguage: parsed.preferredLanguage || null,
+        extractedFeatures: Array.isArray(parsed.extractedFeatures) ? parsed.extractedFeatures : [],
+        pageTypePreference: parsed.pageTypePreference || null,
+        conversationContext: parsed.conversationContext || 'default',
+        askedForName: parsed.askedForName || false,
+        messageCount: parsed.messageCount || 0,
+      };
+    }
   } catch {
     // ignore
   }
   return {
     userName: null,
     projectType: null,
+    industry: null,
     budget: null,
-    timeline: null,
-    preferredTech: null,
-    businessType: null,
+    preferredLanguage: null,
+    extractedFeatures: [],
+    pageTypePreference: null,
     conversationContext: 'default',
     askedForName: false,
     messageCount: 0,
@@ -60,273 +81,597 @@ export function clearMemory(): void {
   localStorage.removeItem(MEMORY_KEY);
 }
 
-// ─── GREETINGS & MEMORY INTEGRATION ─────────────────────────
+// ─── INITIAL HELPERS ──────────────────────────────────────────
 
 export function getInitialGreeting(memory: NovaMemory, loggedInName?: string): string {
   const nameToUse = loggedInName || memory.userName;
   if (nameToUse) {
-    if (memory.projectType) {
-      return `Welcome back, **${nameToUse}**! 👋 Last time we discussed your **${memory.projectType}** project. Would you like to continue from where we left off?
-      
-I'm here as your AI Business Consultant, UI Reviewer, and Cost Estimator. Let's finalize your launch plan!`;
+    if (memory.industry || memory.projectType) {
+      const proj = memory.industry || memory.projectType;
+      return `Welcome back, **${nameToUse}**! 👋 Last time we discussed your **${proj}** website project. Would you like to continue refining your scope and pricing estimate?`;
     }
     return `Hello, **${nameToUse}**! 👋 Welcome back to PrimeNova Studio.
  
-I'm **Nova**, your AI Design & Development Consultant. How is your project planning coming along today? Let's discuss your next launch.`;
+I'm **Novee**, your AI Website Consultant. Let me know what project or features you'd like to plan today!`;
   }
 
-  const hour = new Date().getHours();
-  let timeGreeting = "Hello! Welcome to PrimeNova Studio.";
-  if (hour < 12) timeGreeting = "Good Morning! Hope you're having a wonderful day.";
-  else if (hour < 17) timeGreeting = "Good Afternoon! Welcome to PrimeNova Studio.";
-  else timeGreeting = "Good Evening! Welcome to PrimeNova Studio.";
-
-  return `${timeGreeting}
+  return `Hello! Welcome to PrimeNova Studio. 👋
  
-I'm **Nova**, your AI Design & Development Consultant. I'm here to guide you through our services, outline project estimates, or recommend features for your next product launch.
- 
-Before we start, may I know your name? It helps me personalize our discussion! 😊`;
+I'm **Novee**, your AI Website Consultant & Sales Specialist. Tell me about your business or project idea, and I'll help you structure the perfect website, recommend essential features, and analyze your budget!`;
 }
 
 export function getInitialChips(_memory: NovaMemory): string[] {
   return [
-    'UI Reviewer',
-    'Cost Estimator',
-    'Proposal Generator',
-    'Naming Expert',
-    'SEO Expert',
-    'Business Consultant'
+    'Estimate Website Cost',
+    'AI Consultation',
+    'Portfolio Projects',
+    'UI/UX Design',
+    'Mobile Apps',
+    'Automation',
   ];
 }
 
-// ─── INTENT PATTERNS ─────────────────────────────────────────
+// ─── LANGUAGE DETECTION ENGINE ─────────────────────────────────
 
-const INTENT_PATTERNS: Record<string, string[]> = {
-  greeting: ['hello', 'hi', 'hey', 'greetings', 'howdy', 'namaste', 'hola', 'sup', 'good morning', 'good afternoon', 'good evening'],
-  services: ['services', 'what do you offer', 'what can you do', 'capabilities', 'what you do', 'help me with', 'specialty'],
-  pricing: ['pricing', 'price', 'cost', 'how much', 'budget', 'rate', 'charges', 'expensive', 'affordable', 'quote', 'packages', 'kitna', 'paisa'],
-  web_dev: ['website', 'web development', 'web app', 'webpage', 'landing page', 'frontend', 'backend', 'react', 'next.js'],
-  mobile_dev: ['mobile app', 'android', 'ios', 'react native', 'flutter', 'app development', 'phone app'],
-  ai_integration: ['ai', 'artificial intelligence', 'machine learning', 'chatbot', 'automation', 'gpt', 'gemini', 'nlp'],
-  uiux: ['ui', 'ux', 'design', 'figma', 'wireframe', 'prototype', 'user interface', 'user experience'],
-  branding: ['branding', 'brand', 'logo', 'identity', 'brand guidelines', 'visual identity'],
-  ecommerce: ['ecommerce', 'e-commerce', 'online store', 'shop', 'sell online', 'products', 'shopping cart'],
-  seo: ['seo', 'search engine', 'google ranking', 'organic traffic', 'keywords'],
-  portfolio: ['portfolio', 'projects', 'work', 'case studies', 'examples', 'previous work', 'show me'],
-  timeline: ['timeline', 'how long', 'duration', 'delivery', 'when', 'deadline', 'time frame', 'kitna time'],
-  about: ['about', 'who are you', 'tell me about', 'primenova', 'your team', 'company', 'studio'],
-  contact: ['contact', 'reach', 'email', 'phone', 'call', 'message', 'connect', 'talk'],
-  booking: ['book', 'consultation', 'meeting', 'schedule', 'appointment', 'call', 'discuss'],
-  estimate: ['estimate', 'calculator', 'quote', 'project cost', 'how much will', 'price for'],
-  thanks: ['thank', 'thanks', 'appreciate', 'helpful', 'great', 'awesome', 'perfect', 'shukriya', 'dhanyavaad'],
-  smalltalk: ['how are you', 'whats up', 'nice to meet you', 'good night', 'bye', 'see you', 'goodnight'],
-  confused: ['not sure', 'confused', 'dont know', 'difficult', 'overwhelming', 'lost', 'help me choose'],
-  
-  // Custom Consultation Expert intents
-  ui_reviewer: ['ui reviewer', 'review my ui', 'design audit', 'spacing', 'alignment', 'fonts color', 'ui reviewer mode', 'review ui'],
-  cost_estimator: ['cost estimator', 'calculate price', 'budget calc', 'price estimator', 'estimate calculator', 'cost details', 'project cost estimator'],
-  proposal_generator: ['proposal generator', 'make proposal', 'write brief', 'proposal creator', 'client proposal brief', 'generate proposal'],
-  naming_expert: ['naming expert', 'suggest brand names', 'startup name ideas', 'name my app', 'naming consultant'],
-  seo_expert: ['seo expert', 'seo recommendations', 'keywords advice', 'meta tags checklist', 'rank website higher', 'seo advice']
-};
+export function detectLanguage(text: string): Language {
+  // Check for Devanagari script (pure Hindi)
+  if (/[\u0900-\u097F]/.test(text)) {
+    return 'hindi';
+  }
 
-export function matchIntent(input: string): { intent: string; confidence: number; keywords: string[] } {
-  const normalized = input.toLowerCase().trim();
-  let bestMatch = { intent: 'unknown', confidence: 0, keywords: [] as string[] };
+  const lower = text.toLowerCase();
+  const hinglishKeywords = [
+    'chahiye', 'mujhe', 'mera', 'meri', 'mere', 'bhi', 'hai', 'hain', 'karni', 'karna',
+    'karo', 'kar', 'par', 'aur', 'ka', 'ki', 'ke', 'batao', 'pe', 'se', 'nahi', 'kya',
+    'kaise', 'accha', 'sakte', 'ho', 'hoon', 'kuch', 'lag', 'dena', 'rakhna', 'sab',
+    'bana', 'bata', 'rha', 'raha', 'wale', 'wali', 'wala', 'samajh', 'kitna', 'paisa',
+    'dijiye', 'karo', 'dikhao', 'kare', 'rahe', 'hona', 'honi', 'mil', 'milega'
+  ];
 
-  for (const [intent, keywords] of Object.entries(INTENT_PATTERNS)) {
-    const matchedKeywords: string[] = [];
-    for (const keyword of keywords) {
-      if (normalized.includes(keyword)) {
-        matchedKeywords.push(keyword);
-      }
-    }
-    const confidence = matchedKeywords.length / Math.max(keywords.length, 1);
-    if (matchedKeywords.length > bestMatch.keywords.length) {
-      bestMatch = { intent, confidence, keywords: matchedKeywords };
+  let matches = 0;
+  for (const word of hinglishKeywords) {
+    if (new RegExp(`\\b${word}\\b`, 'i').test(lower)) {
+      matches++;
     }
   }
 
-  return bestMatch;
+  if (matches >= 1 || (lower.includes('website') && (lower.includes('chahiye') || lower.includes('bhi') || lower.includes('hai')))) {
+    return 'hinglish';
+  }
+
+  return 'english';
+}
+
+// ─── REQUIREMENT PARSING ENGINE ───────────────────────────────
+
+interface ParsedRequirement {
+  industry: string | null;
+  industryKey: string | null;
+  features: string[];
+  budget: string | null;
+  pageTypePreference: 'single-page' | 'multi-page' | 'flexible' | null;
+  isDetailedQuery: boolean;
+}
+
+const INDUSTRY_MAP: Record<string, { label: string; keywords: string[] }> = {
+  gym: {
+    label: 'Gym & Fitness',
+    keywords: ['gym', 'fitness', 'workout', 'trainer', 'exercise', 'bodybuilding', 'crossfit'],
+  },
+  restaurant: {
+    label: 'Restaurant & Dining',
+    keywords: ['restaurant', 'cafe', 'food', 'menu', 'dining', 'table booking', 'eatery', 'bistro', 'dhaba'],
+  },
+  ecommerce: {
+    label: 'E-commerce & Storefront',
+    keywords: ['e-commerce', 'ecommerce', 'online store', 'shop', 'products', 'cart', 'buy online', 'clothes', 'fashion', 'store'],
+  },
+  portfolio: {
+    label: 'Portfolio & Personal Brand',
+    keywords: ['portfolio', 'developer', 'designer', 'personal site', 'my work', 'resume', 'cv', 'freelancer'],
+  },
+  healthcare: {
+    label: 'Hospital & Healthcare Clinic',
+    keywords: ['hospital', 'clinic', 'doctor', 'medical', 'patient', 'health', 'appointment', 'dental', 'care'],
+  },
+  education: {
+    label: 'School & Educational Academy',
+    keywords: ['school', 'college', 'coaching', 'institute', 'academy', 'courses', 'education', 'tuition', 'student'],
+  },
+  realestate: {
+    label: 'Real Estate & Property',
+    keywords: ['real estate', 'property', 'builder', 'flats', 'apartments', 'plots', 'broker', 'housing'],
+  },
+  saas: {
+    label: 'SaaS & Web Application',
+    keywords: ['saas', 'software', 'dashboard', 'web app', 'platform', 'tool', 'analytics', 'subscription'],
+  },
+  agency: {
+    label: 'Agency & Corporate Business',
+    keywords: ['agency', 'company', 'business', 'corporate', 'studio', 'consultancy', 'firm'],
+  },
+  booking: {
+    label: 'Booking & Event Platform',
+    keywords: ['event', 'booking platform', 'tickets', 'venue', 'rental'],
+  },
+};
+
+const FEATURE_PATTERNS: Record<string, { label: string; keywords: string[] }> = {
+  booking: {
+    label: 'Online Booking / Appointment System',
+    keywords: ['booking', 'book', 'appointment', 'slot', 'reservation', 'schedule'],
+  },
+  user_form: {
+    label: 'User Details / Contact Lead Form',
+    keywords: ['form', 'user details', 'fill form', 'lead form', 'contact form', 'enquiry'],
+  },
+  confirmation: {
+    label: 'Booking Confirmation Screen / Alert',
+    keywords: ['confirmation', 'confirm', 'success screen', 'acknowledgement'],
+  },
+  prices_plans: {
+    label: 'Membership Plans & Pricing Tables',
+    keywords: ['price', 'prices', 'pricing', 'packages', 'membership', 'plans', 'rates', 'fees'],
+  },
+  trainers_staff: {
+    label: 'Trainers / Faculty / Team Profiles',
+    keywords: ['trainers', 'trainer', 'staff', 'doctors', 'team', 'faculty', 'instructor'],
+  },
+  gallery: {
+    label: 'Facilities / Project Gallery',
+    keywords: ['gallery', 'photos', 'images', 'pictures', 'ambience'],
+  },
+  admin_panel: {
+    label: 'Admin Dashboard / Management Control',
+    keywords: ['admin', 'dashboard', 'management', 'backend control', 'admin panel'],
+  },
+  payments: {
+    label: 'Payment Gateway Integration (Razorpay/Stripe)',
+    keywords: ['payment', 'pay', 'checkout', 'razorpay', 'stripe', 'online payment', 'gateway'],
+  },
+  menu_catalog: {
+    label: 'Interactive Digital Menu / Product Catalog',
+    keywords: ['menu', 'catalog', 'products', 'dishes', 'items'],
+  },
+  location_map: {
+    label: 'Google Map & Location Integration',
+    keywords: ['location', 'map', 'address', 'google map', 'direction'],
+  },
+  whatsapp_cta: {
+    label: 'Direct WhatsApp CTA Integration',
+    keywords: ['whatsapp', 'chat', 'direct message'],
+  },
+  auth: {
+    label: 'User Account Login & Authentication',
+    keywords: ['login', 'signup', 'auth', 'user account', 'registration'],
+  },
+};
+
+export function parseUserRequirements(text: string): ParsedRequirement {
+  const lower = text.toLowerCase();
+
+  // Industry
+  let detectedIndustry: string | null = null;
+  let detectedIndustryKey: string | null = null;
+
+  for (const [key, data] of Object.entries(INDUSTRY_MAP)) {
+    if (data.keywords.some((kw) => lower.includes(kw))) {
+      detectedIndustry = data.label;
+      detectedIndustryKey = key;
+      break;
+    }
+  }
+
+  // Features
+  const features: string[] = [];
+  for (const [key, data] of Object.entries(FEATURE_PATTERNS)) {
+    if (data.keywords.some((kw) => lower.includes(kw))) {
+      features.push(key);
+    }
+  }
+
+  // Page Preference
+  let pagePref: 'single-page' | 'multi-page' | 'flexible' | null = null;
+  if (lower.includes('single page') || lower.includes('single-page') || lower.includes('one page') || lower.includes('ek page')) {
+    pagePref = 'single-page';
+  } else if (lower.includes('multi page') || lower.includes('multi-page') || lower.includes('multiple pages') || lower.includes('multiple page')) {
+    pagePref = 'multi-page';
+  } else if (lower.includes('single page ya multi-page') || lower.includes('single or multi')) {
+    pagePref = 'flexible';
+  }
+
+  // Budget
+  let detectedBudget: string | null = null;
+  const budgetMatch = lower.match(/(?:budget|price|cost|around|under|in)\s*(?:is|of|hai|=|:)?\s*(?:₹|rs\.?|inr)?\s*(\d+k|\d+,\d+|\d+\s*lakh|\d+\s*l|\d{4,6})/i);
+  if (budgetMatch) {
+    let raw = budgetMatch[1].trim();
+    if (raw.toLowerCase().endsWith('k')) {
+      const num = parseInt(raw);
+      detectedBudget = `₹${num * 1000}`;
+    } else if (raw.toLowerCase().includes('lakh') || raw.toLowerCase().includes('l')) {
+      detectedBudget = `₹${raw}`;
+    } else {
+      detectedBudget = `₹${raw}`;
+    }
+  } else if (lower.includes('10k') || lower.includes('10,000') || lower.includes('10000')) {
+    detectedBudget = '₹10,000';
+  } else if (lower.includes('15k') || lower.includes('15,000')) {
+    detectedBudget = '₹15,000';
+  } else if (lower.includes('20k') || lower.includes('20,000')) {
+    detectedBudget = '₹20,000';
+  } else if (lower.includes('50k') || lower.includes('50,000')) {
+    detectedBudget = '₹50,000';
+  } else if (lower.includes('1 lakh') || lower.includes('1lakh') || lower.includes('1L')) {
+    detectedBudget = '₹1,00,000';
+  }
+
+  // Complexity check
+  const isDetailedQuery =
+    Boolean(detectedIndustry) ||
+    features.length >= 2 ||
+    Boolean(detectedBudget) ||
+    text.split(' ').length > 12;
+
+  return {
+    industry: detectedIndustry,
+    industryKey: detectedIndustryKey,
+    features,
+    budget: detectedBudget,
+    pageTypePreference: pagePref,
+    isDetailedQuery,
+  };
+}
+
+// ─── CONSULTATION GENERATOR ───────────────────────────────────
+
+function generateStructuredConsultation(
+  memory: NovaMemory,
+  currentReq: ParsedRequirement,
+  lang: Language
+): NovaResponse {
+  const industryLabel = memory.industry || currentReq.industry || 'Business';
+  const industryKey = currentReq.industryKey || 'agency';
+  const budget = memory.budget || currentReq.budget || 'Custom';
+  const pagePref = memory.pageTypePreference || currentReq.pageTypePreference || 'flexible';
+
+  // Merge feature set
+  const allFeatures = Array.from(
+    new Set([...(memory.extractedFeatures || []), ...(currentReq.features || [])])
+  );
+
+  // Default features if user gave industry but no specific features
+  if (allFeatures.length === 0) {
+    if (industryKey === 'gym') allFeatures.push('prices_plans', 'booking', 'user_form', 'confirmation');
+    else if (industryKey === 'restaurant') allFeatures.push('menu_catalog', 'booking', 'location_map');
+    else if (industryKey === 'ecommerce') allFeatures.push('menu_catalog', 'payments', 'auth');
+    else if (industryKey === 'portfolio') allFeatures.push('gallery', 'user_form', 'location_map');
+    else allFeatures.push('user_form', 'location_map');
+  }
+
+  let text = '';
+  let chips = ['Estimate Website Cost', 'Portfolio Projects', 'Contact Us'];
+  let followUp = '';
+
+  // ─── HINGLISH RESPONSE GENERATOR ───
+  if (lang === 'hinglish') {
+    text += `Bilkul! Aapke **${industryLabel}** website requirement ${
+      budget !== 'Custom' ? `aur **${budget}** budget` : ''
+    } ko dekhte hue, main ek practical aur high-converting website architecture recommend kar raha hoon.\n\n`;
+
+    text += `### 📋 Aapki Requirements:\n`;
+    text += `- **Industry:** ${industryLabel}\n`;
+    if (pagePref !== 'flexible') text += `- **Page Type:** ${pagePref === 'single-page' ? 'Single-Page Layout' : 'Multi-Page Architecture'}\n`;
+    if (budget !== 'Custom') text += `- **Specified Budget:** ${budget}\n`;
+    text += `- **Key Features Mentioned:** ${allFeatures.map(f => FEATURE_PATTERNS[f]?.label || f).join(', ')}\n\n`;
+
+    text += `---\n\n`;
+    text += `### 🎨 Recommended Website Structure:\n`;
+
+    if (industryKey === 'gym') {
+      text += `1. **Hero / Home Section:** Gym introduction, cinematic visuals, aur "Join Now / Book Free Pass" CTA\n`;
+      text += `2. **About Gym:** Facilities, modern equipment, aur hygiene/atmosphere details\n`;
+      text += `3. **Membership Plans & Pricing:** Clear pricing tables (Monthly, Quarterly, Annual)\n`;
+      text += `4. **Trainers & Specializations:** Certified trainers profiles & experience\n`;
+      text += `5. **Facilities & Gallery:** High-resolution photos of workout zones\n`;
+      text += `6. **Booking & Lead Form:** User name, phone number, preferred timing slot\n`;
+      text += `7. **Booking Confirmation State:** Immediate on-screen confirmation + WhatsApp notification trigger\n`;
+      text += `8. **Location & Contact:** Google Maps integration, operating hours, aur contact info\n\n`;
+
+      text += `### 🔄 Booking & User Flow:\n`;
+      text += `User membership/trial plan select karega ➔ Contact & slot details fill karega ➔ Form submit hone par instant **Booking Confirmation** display hogi ➔ Client aur Admin dono ko instant WhatsApp/Email alert chala jayega.\n\n`;
+    } else if (industryKey === 'restaurant') {
+      text += `1. **Hero Section:** Ambiance video/banner, chef specials, aur "Reserve a Table" CTA\n`;
+      text += `2. **About & Story:** Culinary philosophy aur ambiance overview\n`;
+      text += `3. **Interactive Digital Menu:** Filterable menu (Starters, Main Course, Drinks, Veg/Non-Veg)\n`;
+      text += `4. **Table Reservation Form:** Date, time, number of guests, special request\n`;
+      text += `5. **Confirmation UI:** Reservation confirmation with booking code\n`;
+      text += `6. **Location & Timings:** Google Maps, parking info, aur contact numbers\n\n`;
+
+      text += `### 🔄 Reservation Flow:\n`;
+      text += `Guest date/time aur guests select karega ➔ Details enter karega ➔ Confirmation screen receive hogi ➔ Restaurant team ko Instant SMS/WhatsApp notify hoga.\n\n`;
+    } else if (industryKey === 'ecommerce') {
+      text += `1. **Hero Banner:** Featured collections, seasonal offers, aur Shop Now CTA\n`;
+      text += `2. **Product Catalog & Filters:** Categories, price range, size/color filters\n`;
+      text += `3. **Product Detail Page / Modal:** High-res images, description, stock status\n`;
+      text += `4. **Cart & Checkout Drawer:** Dynamic cart calculation, coupon codes, address form\n`;
+      text += `5. **Payment Gateway Integration:** Razorpay / Stripe / COD options\n`;
+      text += `6. **Order Confirmation & Tracking:** Instant order receipt screen\n\n`;
+    } else {
+      text += `1. **Hero Section:** Value proposition headline + Primary Call to Action\n`;
+      text += `2. **About Section:** Company overview, mission, aur key highlights\n`;
+      text += `3. **Services / Features Showcase:** Structured breakdown of offerings\n`;
+      text += `4. **Interactive Lead Form:** User details capture form\n`;
+      text += `5. **Confirmation UI:** Submission success state\n`;
+      text += `6. **Contact & Socials:** Address, email, phone, Google Maps\n\n`;
+    }
+
+    text += `---\n\n`;
+    text += `### 💰 Budget & Scope Analysis (${budget}):\n`;
+
+    if (budget === '₹10,000' || budget === '₹5,000' || budget === '₹15,000') {
+      text += `Aapke **${budget}** budget mein **Custom Single-Page High-Performance Website** with Lead Capture, Booking Confirmation UI, aur WhatsApp CTA fully feasible hai!\n`;
+      text += `*Scope Clarification:* Agar aap fully automated online payment gateway (Razorpay) ya full admin dashboard management software chahte hain, toh woh **Silver Tier (₹40,000+)** scope mein aata hai. Lekin lead enquiry format mein booking completely fit ho jayegi.\n\n`;
+    } else if (budget === '₹40,000' || budget === '₹50,000') {
+      text += `Aapka **${budget}** budget **Silver Tier** range mein hai! Isme aapko Multi-Page layout, MongoDB Database integration, User Authentication, aur Custom Admin Dashboard seamlessly deliver ho sakta hai.\n\n`;
+    } else {
+      text += `Hum PrimeNova Studio mein Starter websites **₹15,000 - ₹30,000 (Bronze)**, Dynamic Database Apps **₹40,000 - ₹80,000 (Silver)**, aur Custom Enterprise Platforms **₹1,00,000+ (Gold)** mein build karte hain. Aapki requirements ke basis par exact scope customize ho sakta hai.\n\n`;
+    }
+
+    text += `### 💡 Smart Recommendations for Maximum Growth:\n`;
+    if (industryKey === 'gym') {
+      text += `- **1-Day Free Trial Pass CTA:** Visitors ko quickly convert karne ke liye "Get 1 Day Free Gym Pass" offer rakhein.\n`;
+      text += `- **WhatsApp Auto-Trigger:** User jab form submit kare, toh uska inquiry payload aapke WhatsApp par immediately trigger ho jaye.\n\n`;
+    } else if (industryKey === 'restaurant') {
+      text += `- **QR Code Menu:** Dine-in customers ke liye website menu QR code scan enabled rakhein.\n`;
+      text += `- **Direct Call / WhatsApp Reservation:** Quick booking ke liye floating action button.\n\n`;
+    } else {
+      text += `- **Fast Mobile Performance:** 100% responsive design sub-second load times ke saath.\n`;
+      text += `- **SEO Meta Setup:** Search engines par locally rank hone ke liye basic schema mapping.\n\n`;
+    }
+
+    text += `---\n\n`;
+
+    if (allFeatures.includes('booking') && !allFeatures.includes('payments')) {
+      followUp = `Kya aap booking sirf lead/enquiry form format mein chahte hain, ya direct online payment gateway (Razorpay/Stripe) integration ke saath membership confirm karni hai?`;
+    } else {
+      followUp = `Kya aap chahoge ki main iska exact page breakdown aur feature estimate proposal format mein prepare karoon?`;
+    }
+
+    text += `**❓ Next Step:**\n"${followUp}"`;
+
+    chips = ['Generate Proposal', 'Estimate Website Cost', 'View Portfolio Projects'];
+  }
+
+  // ─── HINDI RESPONSE GENERATOR ───
+  else if (lang === 'hindi') {
+    text += `नमस्ते! आपकी **${industryLabel}** वेबसाइट की आवश्यकता ${
+      budget !== 'Custom' ? `और **${budget}** बजट` : ''
+    } के आधार पर, यहाँ एक पेशेवर वेबसाइट संरचना का सुझाव दिया गया है:\n\n`;
+
+    text += `### 📋 आपकी आवश्यकताएं (Requirements):\n`;
+    text += `- **क्षेत्र (Industry):** ${industryLabel}\n`;
+    if (budget !== 'Custom') text += `- **निर्धारित बजट:** ${budget}\n`;
+    text += `- **मुख्य विशेषताएं:** ${allFeatures.map(f => FEATURE_PATTERNS[f]?.label || f).join(', ')}\n\n`;
+
+    text += `---\n\n`;
+    text += `### 🎨 अनुशंसित वेबसाइट संरचना (Structure):\n`;
+    text += `1. **मुख्य भाग (Hero Section):** परिचय + 'अभी बुक करें / ज्वाइन करें' बटन\n`;
+    text += `2. **हमारे बारे में (About Us):** विवरण और सुविधाएं\n`;
+    text += `3. **प्लान और कीमतें (Pricing/Plans):** स्पष्ट शुल्क तालिका\n`;
+    text += `4. **बुकिंग और यूज़र डिटेल्स फॉर्म:** नाम, फोन नंबर, पसंदीदा समय फॉर्म\n`;
+    text += `5. **बुकिंग कन्फर्मेशन स्क्रीन:** तत्काल ऑन-स्क्रीन पुष्टि और व्हाट्सएप संदेश\n`;
+    text += `6. **संपर्क और लोकेशन:** गूगल मैप्स और फोन नंबर\n\n`;
+
+    text += `---\n\n`;
+    text += `### 💰 बजट और स्कोप विश्लेषण (${budget}):\n`;
+    if (budget === '₹10,000' || budget === '₹15,000') {
+      text += `आपके **${budget}** बजट में **कस्टम सिंगल-पेज रेस्पॉन्सिव वेबसाइट** (लीड बुकिंग फॉर्म, कन्फर्मेशन और व्हाट्सएप इंटीग्रेशन के साथ) पूरी तरह से संभव है।\n\n`;
+    } else {
+      text += `आपके बजट के अनुसार आवश्यकताओं को पूरी तरह से अनुकूलित किया जा सकता है।\n\n`;
+    }
+
+    text += `---\n\n`;
+    followUp = `क्या आप बुकिंग केवल फॉर्म के माध्यम से चाहते हैं या ऑनलाइन पेमेंट भी जोड़ना चाहते हैं?`;
+    text += `**❓ अगला कदम:**\n"${followUp}"`;
+
+    chips = ['एस्टीमेट देखें', 'पोर्टफोलियो देखें', 'संपर्क करें'];
+  }
+
+  // ─── ENGLISH RESPONSE GENERATOR ───
+  else {
+    text += `Certainly! Based on your **${industryLabel}** requirement ${
+      budget !== 'Custom' ? `and **${budget}** budget` : ''
+    }, here is a high-converting, tailored website architecture for your project.\n\n`;
+
+    text += `### 📋 Understood Requirements:\n`;
+    text += `- **Industry / Type:** ${industryLabel}\n`;
+    if (pagePref !== 'flexible') text += `- **Layout Style:** ${pagePref === 'single-page' ? 'Single-Page Landing' : 'Multi-Page Platform'}\n`;
+    if (budget !== 'Custom') text += `- **Stated Budget:** ${budget}\n`;
+    text += `- **Key Features:** ${allFeatures.map(f => FEATURE_PATTERNS[f]?.label || f).join(', ')}\n\n`;
+
+    text += `---\n\n`;
+    text += `### 🎨 Recommended Website Structure:\n`;
+
+    if (industryKey === 'gym') {
+      text += `1. **Hero Section:** High-energy headline, gym visuals & "Book Free Pass / Join Now" CTA\n`;
+      text += `2. **About Gym:** Overview of facilities, cardio/strength zones & hygiene standards\n`;
+      text += `3. **Membership Plans & Pricing:** Clear pricing breakdown (Monthly, Quarterly, Annual)\n`;
+      text += `4. **Trainers & Staff:** Coach profiles & specializations\n`;
+      text += `5. **Gallery:** High-res workout arena photography\n`;
+      text += `6. **Booking & Lead Form:** Form collecting name, phone number, and slot preference\n`;
+      text += `7. **Booking Confirmation State:** On-screen confirmation + automated WhatsApp alert\n`;
+      text += `8. **Contact & Location:** Interactive Google Maps & contact information\n\n`;
+
+      text += `### 🔄 User Booking Flow:\n`;
+      text += `User selects membership plan ➔ Fills contact details ➔ Submits form ➔ Receives instant **Booking Confirmation** screen ➔ Lead notification sent to admin via WhatsApp/Email.\n\n`;
+    } else if (industryKey === 'restaurant') {
+      text += `1. **Hero Section:** Ambience video, chef highlights & "Reserve a Table" CTA\n`;
+      text += `2. **About Us:** Culinary story & dining ambience overview\n`;
+      text += `3. **Interactive Digital Menu:** Filterable dishes (Starters, Mains, Desserts, Drinks)\n`;
+      text += `4. **Table Reservation Form:** Date, time, guest count, and notes\n`;
+      text += `5. **Confirmation UI:** Instant reservation receipt with booking ID\n`;
+      text += `6. **Location & Directions:** Google Maps integration & phone numbers\n\n`;
+    } else {
+      text += `1. **Hero Section:** Compelling headline + Primary CTA\n`;
+      text += `2. **About Section:** Mission, credentials, and story\n`;
+      text += `3. **Services / Features Grid:** Core solutions breakdown\n`;
+      text += `4. **Lead Capture Form:** User information collection form\n`;
+      text += `5. **Confirmation UI:** Success state acknowledgement\n`;
+      text += `6. **Contact Footer:** Address, email, phone & social links\n\n`;
+    }
+
+    text += `---\n\n`;
+    text += `### 💰 Budget & Scope Analysis (${budget}):\n`;
+    if (budget === '₹10,000' || budget === '₹5,000' || budget === '₹15,000') {
+      text += `Within your **${budget}** budget, a **Custom Single-Page Responsive Site** with Lead Capture, Booking Confirmation, and WhatsApp integration is completely achievable.\n`;
+      text += `*Note:* Fully automated payment gateway checkouts (Stripe/Razorpay) or multi-user admin portals fit into our **Silver Tier (₹40,000+)**.\n\n`;
+    } else {
+      text += `At PrimeNova Studio, our tiers range from Starter Landing Sites (**₹15,000–₹30,000**), Dynamic Web Applications (**₹40,000–₹80,000**), to Custom Enterprise Solutions (**₹1,00,000+**).\n\n`;
+    }
+
+    text += `### 💡 Strategic Consultant Recommendations:\n`;
+    text += `- **High-Converting Lead Magnet:** Offer a 1-day free trial or instant discount on initial form submission.\n`;
+    text += `- **Mobile Optimization:** Sub-second page loads ensuring zero bounce rates.\n\n`;
+
+    text += `---\n\n`;
+    followUp = `Would you like me to generate a detailed feature-by-feature cost breakdown proposal for this project?`;
+    text += `**❓ Next Step:**\n"${followUp}"`;
+
+    chips = ['Generate Proposal', 'Estimate Website Cost', 'Explore Portfolio'];
+  }
+
+  return {
+    text,
+    followUpQuestions: [followUp],
+    suggestionChips: chips,
+    intent: 'consultation',
+  };
 }
 
 // ─── MAIN RESPONSE GENERATOR ─────────────────────────────────
 
-export function generateResponse(input: string, memory: NovaMemory): NovaResponse {
-  const intent = matchIntent(input);
+export function generateResponse(
+  input: string,
+  memory: NovaMemory,
+  messageHistory: SimpleMessage[] = []
+): NovaResponse {
   const normalized = input.toLowerCase().trim();
-  let text = '';
-  let followUpQuestions: string[] = [];
-  let suggestionChips: string[] = getInitialChips(memory);
-  let contextUpdate = memory.conversationContext;
 
-  // ── Handle User Name Input ──
-  if (memory.askedForName && !memory.userName) {
-    // Basic clean name extraction
-    const match = normalized.match(/(?:my name is|i'm|i am|call me|this is|naam)\s+(\w+)/i);
-    const name = match ? match[1] : input.trim().split(' ')[0];
-    if (name && name.length > 1) {
-      const finalName = name.charAt(0).toUpperCase() + name.slice(1).toLowerCase();
-      memory.userName = finalName;
-      memory.askedForName = false;
-      setMemory(memory);
-      text = `Pleasure meeting you, **${finalName}**! 🎉\n\nI'm Nova, your AI design and business development consultant. Tell me, what kind of startup or software system are we brainstorming today?`;
-      return { text, followUpQuestions: ['SaaS platform?', 'E-commerce storefront?', 'Business landing page?'], suggestionChips: ['Cost Estimator', 'UI Reviewer', 'Business Consultant'], intent: 'name_response' };
+  // 1. Detect language
+  const detectedLang = detectLanguage(input);
+  if (!memory.preferredLanguage || (input.length > 10 && detectedLang !== 'english')) {
+    memory.preferredLanguage = detectedLang;
+  }
+  const lang = memory.preferredLanguage || 'hinglish';
+
+  // 2. Parse current user message requirements
+  const currentReq = parseUserRequirements(input);
+
+  // 3. Scan conversation history for accumulated requirements
+  for (const msg of messageHistory) {
+    if (msg.sender === 'user') {
+      const pastReq = parseUserRequirements(msg.text);
+      if (pastReq.industry && !memory.industry) {
+        memory.industry = pastReq.industry;
+      }
+      if (pastReq.budget && !memory.budget) {
+        memory.budget = pastReq.budget;
+      }
+      if (pastReq.pageTypePreference && !memory.pageTypePreference) {
+        memory.pageTypePreference = pastReq.pageTypePreference;
+      }
+      if (pastReq.features.length > 0) {
+        const merged = new Set([...memory.extractedFeatures, ...pastReq.features]);
+        memory.extractedFeatures = Array.from(merged);
+      }
     }
   }
 
-  // ── Smart Multi-lingual detection (Basic Hindi/Hinglish detection) ──
-  const isHinglish = normalized.includes('kaise') || normalized.includes('kya') || normalized.includes('batao') || normalized.includes('naam') || normalized.includes('kitna') || normalized.includes('karo') || normalized.includes('chalega');
-
-  // ── Custom Expert Consultation Responses ──
-  if (intent.intent === 'ui_reviewer' || normalized.includes('ui reviewer') || normalized.includes('review ui')) {
-    text = `🎨 **Nova UI Reviewer Mode Enabled**
-    
-At PrimeNova Studio, we believe UI/UX isn't just about how it looks, but how it works. Here is my core design guidelines audit for your project:
-
-1️⃣ **Visual Contrast & Hierarchy:**
-   Ensure your primary content has at least a **4.5:1** contrast ratio. Use distinct font weights (e.g., Bold Outfit for headings, Regular Inter for body text) instead of varying colors.
-2️⃣ **Spacing & Alignment (The 8px Grid Rule):**
-   Align elements in multiples of **8px** (e.g., margins, paddings, gaps). This establishes visual rhythm and predictable responsive behavior.
-3️⃣ **Interactive States & Micro-interactions:**
-   Every button or hoverable card should respond with micro-animations (e.g., 2% scale-up, smooth border glows) to indicate interactive fields.
-
-*Would you like me to audit a specific section layout, or plan your design guidelines?*`;
-    followUpQuestions = ['Audit my navigation bar layout?', 'What is the color scheme of your brand?'];
-    suggestionChips = ['Audit home layout', 'Design systems tips', 'Business Consultant'];
-    return { text, followUpQuestions, suggestionChips, intent: 'ui_reviewer' };
+  // Update memory with current message
+  if (currentReq.industry) memory.industry = currentReq.industry;
+  if (currentReq.budget) memory.budget = currentReq.budget;
+  if (currentReq.pageTypePreference) memory.pageTypePreference = currentReq.pageTypePreference;
+  if (currentReq.features.length > 0) {
+    const merged = new Set([...memory.extractedFeatures, ...currentReq.features]);
+    memory.extractedFeatures = Array.from(merged);
   }
 
-  if (intent.intent === 'cost_estimator' || normalized.includes('cost estimator') || normalized.includes('estimate cost')) {
-    text = `💰 **Nova Project Cost Estimator**
-    
-I can outline a step-by-step budgetary estimate. To calculate, please tell me which package fits your business model:
-
-🔹 **Bronze (Starter): ₹15,000 - ₹30,000**
-   *Best for landing pages & marketing sites.* Custom UI/UX, fully responsive static layout, integrated contact forms.
-🔹 **Silver (Professional): ₹40,000 - ₹80,000**
-   *Best for dynamic web platforms.* Dynamic dashboards, MongoDB databases, user authentication, CMS setup.
-🔹 **Gold (Enterprise): ₹1,00,000+**
-   *Best for SaaS applications.* Complete payment flows (Stripe/Razorpay), real-time alerts, admin panel analytics, AI model integration.
-
-*Which of these models matches your budget limits?*`;
-    followUpQuestions = ['Estimate timeline for Silver tier?', 'What features do you want to include?'];
-    suggestionChips = ['Silver Tier estimate', 'Gold Tier estimate', 'Proposal Generator'];
-    return { text, followUpQuestions, suggestionChips, intent: 'cost_estimator' };
-  }
-
-  if (intent.intent === 'proposal_generator' || normalized.includes('proposal generator') || normalized.includes('make proposal')) {
-    text = `📄 **Nova Startup Proposal Generator**
-    
-Let's draft a premium, client-ready project brief. Based on standard PrimeNova agreements, here is a template we can customize:
-
----
-### 📋 PRIMENOVA STUDIO PROJECT BRIEF
-* **Client Name:** ${memory.userName || '[Client Name]'}
-* **Project Type:** ${memory.projectType || 'Custom Software Solution'}
-* **Core Goal:** Drive user conversions and deploy clean, fluid user experiences.
-* **Suggested Technology Stack:** Next.js, Tailwind CSS, Spring Boot, MongoDB.
-* **Timeline Estimate:** 6–10 weeks.
-* **Proposed Phases:**
-  1. High-fidelity UI/UX prototype mapping (Figma).
-  2. Frontend build & API integration (Vite/Next.js).
-  3. Security configuration & cloud deployment (AWS/Docker).
----
-
-*Should we add specific databases, third-party APIs, or user authentication details to this template?*`;
-    followUpQuestions = ['Add email verification to scope?', 'What payment gateways do you need?'];
-    suggestionChips = ['Add email auth', 'Add Stripe payment', 'SEO Expert'];
-    return { text, followUpQuestions, suggestionChips, intent: 'proposal_generator' };
-  }
-
-  if (intent.intent === 'naming_expert' || normalized.includes('naming expert') || normalized.includes('name my')) {
-    text = `💡 **Nova Naming Expert Mode**
-    
-Naming a brand requires a blend of visual balance, phonetics, and domain availability. Here are 5 modern startup names based on premium SaaS styles:
-
-1. **NovaFlow** — *Sleek, fluid, action-oriented.* Ideal for SaaS workflow tools.
-2. **PrismWeb** — *Colorful, clean, design-focused.* Perfect for agency frontends.
-3. **AuraForge** — *Atmospheric, strong, high-performance.* Great for hosting or AI frameworks.
-4. **VeloceKit** — *Fast, developer-centric, premium.* Best for engineering code kits.
-5. **IntegraNova** — *Intelligent, unified, scalable.* Best for business consultants.
-
-*Which name resonates with your product? Tell me your industry to get tailored suggestions.*`;
-    followUpQuestions = ['Generate fintech names?', 'Check domain availability guidelines?'];
-    suggestionChips = ['Fintech names', 'AI tool names', 'UI Reviewer'];
-    return { text, followUpQuestions, suggestionChips, intent: 'naming_expert' };
-  }
-
-  if (intent.intent === 'seo_expert' || normalized.includes('seo expert') || normalized.includes('seo checklist')) {
-    text = `📈 **Nova SEO Expert Checklist**
-    
-To rank on Google search pages, keep your metadata clean and speeds sub-second. Here is our checklist:
-
-✅ **Page Title Tags:** Keep titles under **60 characters**, including primary keyword + brand name (e.g., *PrimeNova Studio | Premium Software Design*).
-✅ **Meta Descriptions:** Keep descriptions under **155 characters** with an actionable call-to-action.
-✅ **Heading Structure:** Ensure there is precisely **one** \`<h1>\` tag per page, followed by logical \`<h2>\` & \`<h3>\` tags.
-✅ **Performance Metrics:** Optimize image sizes and use Next.js routing to maintain Google Lighthouse performance scores above **90**.
-
-*Would you like me to draft high-ranking meta titles for your project?*`;
-    followUpQuestions = ['Draft my meta descriptions?', 'Suggest keywords for e-commerce?'];
-    suggestionChips = ['Draft meta tags', 'E-commerce keywords', 'UI Reviewer'];
-    return { text, followUpQuestions, suggestionChips, intent: 'seo_expert' };
-  }
-
-  // ── Fallback intent matching ──
-  switch (intent.intent) {
-    case 'greeting': {
-      const name = memory.userName || '';
-      text = `Hello ${name ? `**${name}** ` : ''}👋 Welcome to **PrimeNova Studio** — where premium design meets intelligence.
-
-I'm **Nova**, your AI consultant. I can assist you as a:
-🎨 **UI Reviewer** • 💰 **Cost Estimator** • 📄 **Proposal Generator** • 💡 **Naming Expert** • 📈 **SEO Expert**
-
-What are we planning or review today?`;
-      if (!memory.userName && !memory.askedForName) {
-        text += `\n\nBefore we proceed, what is your name?`;
-        memory.askedForName = true;
-      }
-      break;
-    }
-
-    case 'services':
-      text = `Certainly! At PrimeNova Studio, we deliver:
-- **Web Development** (Next.js, Spring Boot, React)
-- **UI/UX Design** (Figma wireframes & design systems)
-- **AI Integrations** (Custom assistants & data pipelines)
-- **Mobile Development** (React Native & Flutter)
-- **SEO & Branding** (Meta mapping & visual design)
-
-Would you like me to launch the **Cost Estimator** for one of these?`;
-      suggestionChips = ['Cost Estimator', 'Proposal Generator'];
-      break;
-
-    case 'pricing':
-      text = `Our packages cover starter landing pages (Bronze), dynamic databases/dashboards (Silver), and enterprise custom platforms (Gold). 
-      
-Use my **Cost Estimator** chip to calculate custom pricing.`;
-      suggestionChips = ['Cost Estimator', 'View Tiers'];
-      break;
-
-    default:
-      if (isHinglish) {
-        text = `Main samajh gaya! Aapko ek software solution chahiye. 
-        
-Main aapki help **Cost Estimator**, **UI Reviewer**, ya **SEO Expert** ki tarah kar sakta hoon. Aap kis business ke liye plan kar rahe hain?`;
-        suggestionChips = ['Cost Estimator', 'UI Reviewer', 'Naming Expert'];
-      } else {
-        text = `I can help you review layouts, calculate project prices, draft a brief, or generate startup names. 
-        
-Which role would you like me to assume right now?`;
-        suggestionChips = getInitialChips(memory);
-      }
-      break;
-  }
-
-  // Save updated context
-  memory.conversationContext = contextUpdate;
   memory.messageCount += 1;
   setMemory(memory);
 
-  return { text, followUpQuestions, suggestionChips, intent: intent.intent };
+  // 4. Check if this is a detailed consultation request
+  const hasAccumulatedContext = Boolean(memory.industry) || Boolean(memory.budget) || memory.extractedFeatures.length > 0;
+
+  if (currentReq.isDetailedQuery || (hasAccumulatedContext && (normalized.includes('website') || normalized.includes('chahiye') || normalized.includes('add') || normalized.includes('budget') || normalized.includes('booking')))) {
+    return generateStructuredConsultation(memory, currentReq, lang);
+  }
+
+  // 5. Handle standard simple queries concisely
+  // Handle Greetings
+  if (/^(hi|hello|hey|namaste|greetings|hola|good morning|good afternoon|good evening)$/i.test(normalized)) {
+    let reply = '';
+    if (lang === 'hinglish') {
+      reply = `Hello! 👋 Main **Novee** hoon, PrimeNova Studio ka AI Website Consultant.\n\nAap kis specific business ya website idea ke liye pricing aur features explore karna chahte ho? (jaise Gym, Restaurant, E-commerce, Portfolio, etc.)`;
+    } else if (lang === 'hindi') {
+      reply = `नमस्ते! 👋 मैं **Novee** हूँ, PrimeNova Studio का AI वेबसाइट कंसल्टेंट।\n\nआप किस व्यवसाय या वेबसाइट विचार के लिए सुविधाएँ और लागत जानना चाहते हैं?`;
+    } else {
+      reply = `Hello! 👋 I'm **Novee**, your AI Website Consultant at PrimeNova Studio.\n\nTell me about your business or project idea (e.g. Gym, Restaurant, E-commerce, Portfolio), and I'll outline the ideal structure, features, and cost estimate for you!`;
+    }
+    return {
+      text: reply,
+      followUpQuestions: ['Gym website estimate?', 'E-commerce platform?'],
+      suggestionChips: ['Estimate Website Cost', 'AI Consultation', 'Portfolio Projects'],
+      intent: 'greeting',
+    };
+  }
+
+  // Handle Portfolio queries
+  if (normalized.includes('portfolio') || normalized.includes('projects') || normalized.includes('work') || normalized.includes('faiz')) {
+    let reply = '';
+    const projNames = portfolioData.projects.map((p) => `• **${p.title}** (${p.category})`).join('\n');
+    if (lang === 'hinglish') {
+      reply = `Haan bilkul! PrimeNova Studio aur Faiz ke featured projects yahan se explore kar sakte ho:\n\n${projNames}\n\nAap Inme se kis type ka project apne business ke liye build karwana chahte ho?`;
+    } else {
+      reply = `Here are some of PrimeNova Studio's recent featured engineering projects:\n\n${projNames}\n\nWhich type of project aligns with your vision?`;
+    }
+    return {
+      text: reply,
+      followUpQuestions: ['Tell me about the Task App', 'View E-Commerce Platform'],
+      suggestionChips: ['Portfolio Projects', 'Estimate Website Cost'],
+      intent: 'portfolio',
+    };
+  }
+
+  // Handle Pricing queries
+  if (normalized.includes('price') || normalized.includes('pricing') || normalized.includes('cost') || normalized.includes('rate') || normalized.includes('kitna paisa')) {
+    let reply = '';
+    if (lang === 'hinglish') {
+      reply = `PrimeNova Studio mein hum 3 flexible tiers offer karte hain:\n\n🔹 **Bronze (Starter Landing): ₹15,000 - ₹30,000** — Single/Multi-page responsive landing sites, lead forms, fast performance.\n🔹 **Silver (Dynamic Web App): ₹40,000 - ₹80,000** — MongoDB database, authentication, admin dashboard, dynamic CMS.\n🔹 **Gold (Enterprise Platform): ₹1,00,000+** — Payment gateways, real-time analytics, custom AI integrations.\n\n*Note:* Agar aapka specific budget (jaise ₹10,000) hai, toh mujhe aapki requirements batao, hum scope ko aapke budget mein adjust kar sakte hain!`;
+    } else {
+      reply = `At PrimeNova Studio, we structure transparent project packages:\n\n🔹 **Bronze Tier (Starter): ₹15,000 - ₹30,000** — Responsive design, high performance, lead capture forms.\n🔹 **Silver Tier (Professional): ₹40,000 - ₹80,000** — Dynamic database, user authentication, custom admin dashboard.\n🔹 **Gold Tier (Enterprise): ₹1,00,000+** — Payment processing, microservices, AI pipelines.\n\nTell me your specific project requirements or budget, and I'll tailor the exact scope for you!`;
+    }
+    return {
+      text: reply,
+      followUpQuestions: ['Bronze Tier scope?', 'Can we fit in ₹10k budget?'],
+      suggestionChips: ['Estimate Website Cost', 'Generate Proposal'],
+      intent: 'pricing',
+    };
+  }
+
+  // Fallback for short general queries
+  let fallbackText = '';
+  if (lang === 'hinglish') {
+    fallbackText = `Main samajh gaya! Aapko **${input}** ke baare mein guidance chahiye.\n\nMujhe bas thodi details bataiye — aapki website kis type ki hai (jaise Gym, Restaurant, E-commerce, Portfolio), aur usme kya key features (jaise booking, forms, admin panel) chahiye? Main aapko exact structure aur estimate bataunga!`;
+  } else if (lang === 'hindi') {
+    fallbackText = `मैं समझ गया! कृपया मुझे अपने प्रोजेक्ट का प्रकार (जैसे जिम, रेस्टोरेंट, ई-कॉमर्स) और आवश्यक सुविधाएं बताएं, ताकि मैं आपको सटीक लागत और संरचना बता सकूं।`;
+  } else {
+    fallbackText = `I understand! Tell me a bit more about your project idea—such as the business type (Gym, Restaurant, E-commerce, Portfolio) and key features required (e.g. booking, forms, payment gateway). I'll generate a complete custom consultation for you!`;
+  }
+
+  return {
+    text: fallbackText,
+    followUpQuestions: ['Gym website guidance', 'E-commerce website guidance'],
+    suggestionChips: getInitialChips(memory),
+    intent: 'fallback',
+  };
 }

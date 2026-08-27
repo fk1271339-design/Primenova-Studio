@@ -21,10 +21,10 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
 
-    @Value("${app.adminEmail:hello@primenova.studio}")
+    @Value("${app.adminEmail:admin@primenova.studio}")
     private String adminEmail;
 
-    @Value("${app.frontendUrl:http://localhost:8080}")
+    @Value("${app.frontendUrl:http://localhost:5173}")
     private String frontendUrl;
 
     @Value("${app.mailFrom:placeholder@gmail.com}")

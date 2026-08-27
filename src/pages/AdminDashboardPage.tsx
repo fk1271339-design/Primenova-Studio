@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { API_BASE_URL } from '../config';
 import AdminMessages from '../components/AdminMessages';
 
@@ -36,12 +36,23 @@ interface AnalyticsData {
   credentialsUsersCount: number;
 }
 
+interface AdminNotification {
+  id: string;
+  type: string;
+  title: string;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
 const AdminDashboardPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'users' | 'contacts' | 'sessions'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'users' | 'contacts' | 'projects' | 'pricing' | 'notifications' | 'sessions'>('analytics');
   
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [users, setUsers] = useState<UserItem[]>([]);
   const [sessions, setSessions] = useState<UserSessionItem[]>([]);
+  const [notifications, setNotifications] = useState<AdminNotification[]>([]);
+  const [showNotificationMenu, setShowNotificationMenu] = useState(false);
   const [unreadMessages, setUnreadMessages] = useState(0);
 
   const [userSearch, setUserSearch] = useState('');
@@ -91,6 +102,18 @@ const AdminDashboardPage: React.FC = () => {
     }
   };
 
+  const fetchNotifications = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/notifications`, { headers: getHeaders() });
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch notifications', e);
+    }
+  };
+
   const fetchUnreadCount = async () => {
     try {
       const res = await fetch(`${API_BASE_URL}/admin/contacts/stats`, { headers: getHeaders() });
@@ -105,10 +128,34 @@ const AdminDashboardPage: React.FC = () => {
 
   useEffect(() => {
     setIsLoading(true);
-    Promise.all([fetchAnalytics(), fetchUsers(), fetchSessions(), fetchUnreadCount()]).finally(() => {
+    Promise.all([fetchAnalytics(), fetchUsers(), fetchSessions(), fetchNotifications(), fetchUnreadCount()]).finally(() => {
       setIsLoading(false);
     });
   }, []);
+
+  const handleMarkNotificationRead = async (id: string) => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/notifications/${id}/read`, {
+        method: 'PUT',
+        headers: getHeaders(),
+      });
+      if (res.ok) fetchNotifications();
+    } catch (e) {
+      console.error('Could not mark notification read', e);
+    }
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/notifications/read-all`, {
+        method: 'PUT',
+        headers: getHeaders(),
+      });
+      if (res.ok) fetchNotifications();
+    } catch (e) {
+      console.error('Could not mark all notifications read', e);
+    }
+  };
 
   const handleUserStatusToggle = async (userId: string, currentStatus: string) => {
     const newStatus = currentStatus === 'ACTIVE' ? 'BLOCKED' : 'ACTIVE';
@@ -145,6 +192,8 @@ const AdminDashboardPage: React.FC = () => {
     }
   };
 
+  const unreadNotificationsCount = notifications.filter(n => !n.isRead).length;
+
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background text-foreground">
@@ -159,12 +208,74 @@ const AdminDashboardPage: React.FC = () => {
       <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
         <div>
           <span className="inline-block px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[10px] font-mono font-bold tracking-widest uppercase mb-2">
-            CONTROL CENTER
+            SYSTEM CONTROL CENTER
           </span>
           <h1 className="text-3xl font-bold font-display text-foreground">Admin Dashboard</h1>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Notification Bell Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => setShowNotificationMenu(!showNotificationMenu)}
+              className="p-2.5 rounded-xl bg-foreground/5 dark:bg-white/5 border border-foreground/10 text-foreground relative hover:bg-foreground/10 transition-colors"
+              aria-label="Notifications"
+            >
+              <svg className="w-5 h-5 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              {unreadNotificationsCount > 0 && (
+                <span className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center animate-pulse">
+                  {unreadNotificationsCount}
+                </span>
+              )}
+            </button>
+
+            <AnimatePresence>
+              {showNotificationMenu && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.98 }}
+                  className="absolute right-0 top-[calc(100%+8px)] w-80 rounded-2xl border border-foreground/10 p-4 shadow-2xl z-50 overflow-hidden"
+                  style={{ background: 'rgba(9,9,11,0.96)', backdropFilter: 'blur(28px)' }}
+                >
+                  <div className="flex items-center justify-between pb-3 border-b border-foreground/10 mb-3">
+                    <span className="text-xs font-mono font-bold text-amber-400 uppercase">Notifications</span>
+                    <button
+                      onClick={handleMarkAllNotificationsRead}
+                      className="text-[10px] text-muted-foreground hover:text-white"
+                    >
+                      Mark all read
+                    </button>
+                  </div>
+
+                  <div className="max-h-60 overflow-y-auto space-y-2">
+                    {notifications.length === 0 ? (
+                      <p className="text-xs text-muted-foreground text-center py-4">No recent notifications</p>
+                    ) : (
+                      notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          onClick={() => handleMarkNotificationRead(n.id)}
+                          className={`p-2.5 rounded-xl border text-xs cursor-pointer transition-colors ${
+                            !n.isRead ? 'bg-amber-500/10 border-amber-500/30 text-foreground' : 'bg-foreground/5 border-foreground/10 text-muted-foreground'
+                          }`}
+                        >
+                          <div className="font-bold flex items-center justify-between">
+                            <span>{n.title}</span>
+                            {!n.isRead && <span className="w-2 h-2 rounded-full bg-amber-400" />}
+                          </div>
+                          <p className="text-[11px] mt-1 line-clamp-2">{n.message}</p>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+
           <button
             onClick={handleExportCsv}
             className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-400 to-orange-500 text-black font-semibold text-xs shadow-md hover:opacity-90 transition-opacity flex items-center gap-2"
@@ -172,7 +283,7 @@ const AdminDashboardPage: React.FC = () => {
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
-            Export Contacts CSV
+            Export CSV
           </button>
         </div>
       </div>
@@ -183,7 +294,7 @@ const AdminDashboardPage: React.FC = () => {
           <div className="p-5 rounded-2xl liquid-glass border border-foreground/10 flex flex-col">
             <span className="text-xs text-muted-foreground uppercase font-mono tracking-wider">Total Users</span>
             <span className="text-3xl font-extrabold font-display text-foreground mt-2">{analytics.totalUsers}</span>
-            <span className="text-[10px] text-amber-500 font-medium mt-1">Google: {analytics.googleUsersCount} | GitHub: {analytics.githubUsersCount} | Email: {analytics.credentialsUsersCount}</span>
+            <span className="text-[10px] text-amber-500 font-medium mt-1">Google: {analytics.googleUsersCount} | Email: {analytics.credentialsUsersCount}</span>
           </div>
 
           <div className="p-5 rounded-2xl liquid-glass border border-foreground/10 flex flex-col">
@@ -199,52 +310,38 @@ const AdminDashboardPage: React.FC = () => {
           </div>
 
           <div className="p-5 rounded-2xl liquid-glass border border-foreground/10 flex flex-col">
-            <span className="text-xs text-muted-foreground uppercase font-mono tracking-wider">OAuth Ratio</span>
-            <span className="text-3xl font-extrabold font-display text-foreground mt-2">{analytics.googleLogins + analytics.githubLogins}</span>
-            <span className="text-[10px] text-rose-500 font-medium mt-1">Google: {analytics.googleLogins} | GitHub: {analytics.githubLogins}</span>
+            <span className="text-xs text-muted-foreground uppercase font-mono tracking-wider">Unread Alerts</span>
+            <span className="text-3xl font-extrabold font-display text-amber-400 mt-2">{unreadNotificationsCount}</span>
+            <span className="text-[10px] text-rose-500 font-medium mt-1">Notifications Bell</span>
           </div>
         </div>
       )}
 
-      {/* Tabs */}
-      <div className="flex border-b border-foreground/10 mb-6 gap-6">
-        <button
-          onClick={() => setActiveTab('analytics')}
-          className={`pb-3 text-xs font-semibold uppercase tracking-wider transition-colors ${
-            activeTab === 'analytics' ? 'border-b-2 border-amber-400 text-foreground' : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          Overview
-        </button>
-        <button
-          onClick={() => setActiveTab('users')}
-          className={`pb-3 text-xs font-semibold uppercase tracking-wider transition-colors ${
-            activeTab === 'users' ? 'border-b-2 border-amber-400 text-foreground' : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          Users ({users.length})
-        </button>
-        <button
-          onClick={() => setActiveTab('contacts')}
-          className={`pb-3 text-xs font-semibold uppercase tracking-wider transition-colors flex items-center gap-2 ${
-            activeTab === 'contacts' ? 'border-b-2 border-amber-400 text-foreground' : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          Inquiries
-          {unreadMessages > 0 && (
-            <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold">
-              {unreadMessages}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('sessions')}
-          className={`pb-3 text-xs font-semibold uppercase tracking-wider transition-colors ${
-            activeTab === 'sessions' ? 'border-b-2 border-amber-400 text-foreground' : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          Audit Log ({sessions.length})
-        </button>
+      {/* Tabs Bar */}
+      <div className="flex border-b border-foreground/10 mb-6 gap-4 overflow-x-auto">
+        {[
+          { id: 'analytics', label: 'Overview' },
+          { id: 'users', label: `Users (${users.length})` },
+          { id: 'contacts', label: 'Inquiries', badge: unreadMessages },
+          { id: 'projects', label: 'Projects' },
+          { id: 'pricing', label: 'Pricing' },
+          { id: 'sessions', label: `Audit Log (${sessions.length})` },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id as any)}
+            className={`pb-3 text-xs font-semibold uppercase tracking-wider transition-colors flex items-center gap-2 shrink-0 ${
+              activeTab === tab.id ? 'border-b-2 border-amber-400 text-foreground' : 'text-muted-foreground hover:text-foreground'
+            }`}
+          >
+            {tab.label}
+            {tab.badge && tab.badge > 0 ? (
+              <span className="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-amber-500 text-black text-[10px] font-bold">
+                {tab.badge}
+              </span>
+            ) : null}
+          </button>
+        ))}
       </div>
 
       {/* Users View */}
@@ -314,6 +411,60 @@ const AdminDashboardPage: React.FC = () => {
       {activeTab === 'contacts' && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <AdminMessages />
+        </motion.div>
+      )}
+
+      {/* Projects Management Architecture View */}
+      {activeTab === 'projects' && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold font-display text-foreground uppercase tracking-wider">Project Showcase Manager</h2>
+            <span className="text-xs font-mono text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">Frontend CRUD Engine</span>
+          </div>
+          <div className="p-8 rounded-2xl liquid-glass border border-foreground/10 text-center space-y-4">
+            <p className="text-xs text-muted-foreground">Portfolio items are dynamically managed through the Portfolio showcase matrix.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+              <div className="p-4 rounded-xl bg-foreground/5 border border-foreground/10">
+                <span className="font-bold text-xs text-foreground block">Nova OS</span>
+                <span className="text-[10px] text-amber-400 font-mono">AI Category • Published</span>
+              </div>
+              <div className="p-4 rounded-xl bg-foreground/5 border border-foreground/10">
+                <span className="font-bold text-xs text-foreground block">Aether Brand System</span>
+                <span className="text-[10px] text-amber-400 font-mono">Branding Category • Published</span>
+              </div>
+              <div className="p-4 rounded-xl bg-foreground/5 border border-foreground/10">
+                <span className="font-bold text-xs text-foreground block">Synthetix Storefront</span>
+                <span className="text-[10px] text-amber-400 font-mono">E-Commerce Category • Published</span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Pricing Management Architecture View */}
+      {activeTab === 'pricing' && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-bold font-display text-foreground uppercase tracking-wider">Pricing Tier Manager</h2>
+            <span className="text-xs font-mono text-amber-400 bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">Active Disclosures Enabled</span>
+          </div>
+          <div className="p-8 rounded-2xl liquid-glass border border-foreground/10 text-center space-y-4">
+            <p className="text-xs text-muted-foreground">Pricing packages feature clear disclosures ("Starting from", "Custom quote") and feature lists.</p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+              <div className="p-4 rounded-xl bg-foreground/5 border border-foreground/10">
+                <span className="font-bold text-xs text-foreground block">Starter Website ($2,499)</span>
+                <span className="text-[10px] text-emerald-400 font-mono">Active Tier</span>
+              </div>
+              <div className="p-4 rounded-xl bg-foreground/5 border border-foreground/10">
+                <span className="font-bold text-xs text-foreground block">Business Website ($4,999)</span>
+                <span className="text-[10px] text-amber-400 font-mono">Recommended Tier</span>
+              </div>
+              <div className="p-4 rounded-xl bg-foreground/5 border border-foreground/10">
+                <span className="font-bold text-xs text-foreground block">AI Agent & LLM Solution</span>
+                <span className="text-[10px] text-indigo-400 font-mono">Indicative Pricing Tier</span>
+              </div>
+            </div>
+          </div>
         </motion.div>
       )}
 

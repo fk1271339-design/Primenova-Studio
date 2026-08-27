@@ -3,9 +3,11 @@ package com.primenova.studio.controller;
 import com.primenova.studio.dto.UserResponse;
 import com.primenova.studio.exception.CustomException;
 import com.primenova.studio.model.Contact;
+import com.primenova.studio.model.Notification;
 import com.primenova.studio.model.User;
 import com.primenova.studio.model.UserSession;
 import com.primenova.studio.repository.ContactRepository;
+import com.primenova.studio.repository.NotificationRepository;
 import com.primenova.studio.repository.UserRepository;
 import com.primenova.studio.repository.UserSessionRepository;
 import org.springframework.http.HttpHeaders;
@@ -26,13 +28,16 @@ public class AdminController {
     private final UserRepository userRepository;
     private final ContactRepository contactRepository;
     private final UserSessionRepository userSessionRepository;
+    private final NotificationRepository notificationRepository;
 
     public AdminController(UserRepository userRepository,
                            ContactRepository contactRepository,
-                           UserSessionRepository userSessionRepository) {
+                           UserSessionRepository userSessionRepository,
+                           NotificationRepository notificationRepository) {
         this.userRepository = userRepository;
         this.contactRepository = contactRepository;
         this.userSessionRepository = userSessionRepository;
+        this.notificationRepository = notificationRepository;
     }
 
     @GetMapping("/users")
@@ -221,4 +226,41 @@ public class AdminController {
                 .contentType(MediaType.parseMediaType("text/csv"))
                 .body(csv.toString());
     }
+
+    @GetMapping("/notifications")
+    public ResponseEntity<List<Notification>> getNotifications() {
+        List<Notification> notifications = notificationRepository.findAll().stream()
+                .sorted((n1, n2) -> {
+                    if (n1.getCreatedAt() == null || n2.getCreatedAt() == null) return 0;
+                    return n2.getCreatedAt().compareTo(n1.getCreatedAt());
+                })
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(notifications);
+    }
+
+    @PutMapping("/notifications/{id}/read")
+    public ResponseEntity<Notification> markNotificationRead(@PathVariable String id) {
+        Notification notification = notificationRepository.findById(id)
+                .orElseThrow(() -> new CustomException("Notification not found", HttpStatus.NOT_FOUND));
+        notification.setRead(true);
+        return ResponseEntity.ok(notificationRepository.save(notification));
+    }
+
+    @PutMapping("/notifications/read-all")
+    public ResponseEntity<Map<String, String>> markAllNotificationsRead() {
+        List<Notification> notifications = notificationRepository.findAll();
+        notifications.forEach(n -> n.setRead(true));
+        notificationRepository.saveAll(notifications);
+        return ResponseEntity.ok(Map.of("message", "All notifications marked as read"));
+    }
+
+    @DeleteMapping("/notifications/{id}")
+    public ResponseEntity<Map<String, String>> deleteNotification(@PathVariable String id) {
+        if (!notificationRepository.existsById(id)) {
+            throw new CustomException("Notification not found", HttpStatus.NOT_FOUND);
+        }
+        notificationRepository.deleteById(id);
+        return ResponseEntity.ok(Map.of("message", "Notification deleted"));
+    }
 }
+

@@ -130,6 +130,7 @@ const AdminMessages: React.FC = () => {
   const [busy, setBusy] = useState(false);
   const [selected, setSelected] = useState<ContactItem | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<ContactItem | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'error' | 'info' } | null>(null);
 
   const getHeaders = () => {
     const token = localStorage.getItem('primenova_token');
@@ -218,10 +219,53 @@ const AdminMessages: React.FC = () => {
     }
   };
 
-  const replyTo = (c: ContactItem) => {
-    const subject = encodeURIComponent(`Re: ${c.subject || 'Your PrimeNova Studio inquiry'}`);
-    const body = encodeURIComponent(`Hi ${c.fullName},\n\nThanks for reaching out to PrimeNova Studio.\n\n`);
-    return `mailto:${c.email}?subject=${subject}&body=${body}`;
+  /** Build a Gmail web-compose URL with pre-filled To / Subject / Body */
+  const buildGmailComposeUrl = (c: ContactItem): string => {
+    const subject = c.subject
+      ? `Re: Your PrimeNova Studio Inquiry — ${c.subject}`
+      : 'Re: Your Inquiry to PrimeNova Studio';
+
+    const body = [
+      `Hi ${c.fullName},`,
+      '',
+      'Thank you for contacting PrimeNova Studio.',
+      '',
+      `We have received your inquiry regarding ${c.projectType || c.subject || 'your project'}.`,
+      '',
+      "I'm reviewing your requirements and will get back to you shortly.",
+      '',
+      'Best regards,',
+      'PrimeNova Studio',
+      'hello@primenova.studio',
+    ].join('\n');
+
+    const params = new URLSearchParams({
+      view: 'cm',
+      fs: '1',
+      to: c.email,
+      su: subject,
+      body,
+    });
+
+    return `https://mail.google.com/mail/?${params.toString()}`;
+  };
+
+  /** Validates email, opens Gmail compose in a new tab, handles popup-blocking */
+  const handleReplyViaEmail = (c: ContactItem) => {
+    if (!c.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c.email)) {
+      setToast({ message: 'Client email address is not available.', type: 'error' });
+      return;
+    }
+
+    const url = buildGmailComposeUrl(c);
+    const newTab = window.open(url, '_blank', 'noopener,noreferrer');
+
+    if (!newTab || newTab.closed || typeof newTab.closed === 'undefined') {
+      setToast({
+        message: 'Please allow pop-ups for PrimeNova Studio to open Gmail.',
+        type: 'info',
+      });
+    }
   };
 
   const handleDelete = async () => {
@@ -461,9 +505,14 @@ const AdminMessages: React.FC = () => {
                   <div className="p-4 rounded-xl bg-foreground/3 dark:bg-white/3 border border-foreground/10">
                     <div className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">From</div>
                     <div className="font-semibold text-foreground">{selected.fullName}</div>
-                    <a href={`mailto:${selected.email}`} className="text-primary text-xs hover:underline">
+                    <button
+                      type="button"
+                      onClick={() => handleReplyViaEmail(selected)}
+                      className="text-primary text-xs hover:underline text-left bg-transparent border-none cursor-pointer p-0"
+                      title="Open Gmail reply"
+                    >
                       {selected.email}
-                    </a>
+                    </button>
                     {selected.phone && <div className="text-xs text-muted-foreground mt-1">{selected.phone}</div>}
                     {selected.company && <div className="text-xs text-muted-foreground mt-1">{selected.company}</div>}
                   </div>
@@ -536,13 +585,14 @@ const AdminMessages: React.FC = () => {
                       <ArchiveIcon className="w-3.5 h-3.5" /> Archive
                     </button>
                   )}
-                  <a
-                    href={replyTo(selected)}
+                  <button
+                    type="button"
+                    onClick={() => handleReplyViaEmail(selected)}
                     className="flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary/10 border border-primary/25 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
-                    title="Open your email client with a pre-filled reply"
+                    title="Open Gmail reply"
                   >
                     <ReplyIcon className="w-3.5 h-3.5" /> Reply via Email
-                  </a>
+                  </button>
                   <button
                     disabled={busy}
                     onClick={() => setDeleteTarget(selected)}
@@ -604,6 +654,32 @@ const AdminMessages: React.FC = () => {
                 </button>
               </div>
             </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* Toast notification */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 30 }}
+            transition={{ duration: 0.25 }}
+            className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-xl border text-sm font-semibold shadow-xl backdrop-blur-lg ${
+              toast.type === 'error'
+                ? 'bg-rose-500/15 border-rose-500/30 text-rose-400'
+                : 'bg-amber-500/15 border-amber-500/30 text-amber-400'
+            }`}
+          >
+            <div className="flex items-center gap-3">
+              <span>{toast.message}</span>
+              <button
+                onClick={() => setToast(null)}
+                className="ml-2 p-0.5 rounded hover:bg-foreground/10 transition-colors"
+              >
+                <XIcon className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
