@@ -11,7 +11,7 @@ node_modules
 dist
 dist-ssr
 *.local
-data/
+/data/
 
 # Frontend build output copied into the backend jar (build artifact —
 # build-frontend.bat se regenerate hota hai)
