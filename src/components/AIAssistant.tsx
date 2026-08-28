@@ -1,10 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { SendIcon, SparklesIcon } from './Icons';
-import { useAuth } from '../context/AuthContext';
 import {
   generateResponse,
   getMemory,
-  getInitialGreeting,
   getInitialChips,
   clearMemory,
   type NovaMemory,
@@ -237,12 +235,11 @@ const CARD_RESPONSES: Record<string, { text: string; chips: string[] }> = {
 // ─── MAIN COMPONENT ─────────────────────────────────────────
 
 const AIAssistant: React.FC = () => {
-  const { user } = useAuth();
   const [memory, setLocalMemory] = useState<NovaMemory>(getMemory);
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [introStep, setIntroStep] = useState(0);
-  const [introFinished, setIntroFinished] = useState(false);
+  const [, setIntroFinished] = useState(false);
   const [visibleCardsCount, setVisibleCardsCount] = useState(0);
   const [activeCardTitle, setActiveCardTitle] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
