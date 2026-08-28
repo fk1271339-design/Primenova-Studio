@@ -25,6 +25,8 @@ backend/target/
 .env
 .env.*
 !.env.example
+restore-config.yml
+primenova_backup/
 
 # Editor directories and files
 .vscode/*
