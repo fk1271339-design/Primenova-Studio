@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -6,8 +6,12 @@ const GoogleCallbackPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { setAuthTokens } = useAuth();
   const navigate = useNavigate();
+  const processedRef = useRef(false);
 
   useEffect(() => {
+    if (processedRef.current) return;
+    processedRef.current = true;
+
     const token = searchParams.get('token');
     const refreshToken = searchParams.get('refreshToken');
     const errorParam = searchParams.get('error');
@@ -17,8 +21,11 @@ const GoogleCallbackPage: React.FC = () => {
       return;
     }
 
-    if (token && refreshToken) {
-      setAuthTokens(token, refreshToken)
+    if (token) {
+      // Clean up sensitive tokens from visible URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+
+      setAuthTokens(token, refreshToken || '')
         .then(() => {
           navigate('/profile', { replace: true });
         })
@@ -26,7 +33,7 @@ const GoogleCallbackPage: React.FC = () => {
           navigate('/login?error=oauth_failed', { replace: true });
         });
     } else {
-      navigate('/login', { replace: true });
+      navigate('/login?error=missing_token', { replace: true });
     }
   }, [searchParams, setAuthTokens, navigate]);
 
