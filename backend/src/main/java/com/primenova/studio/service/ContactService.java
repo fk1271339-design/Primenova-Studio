@@ -109,17 +109,9 @@ public class ContactService {
             log.warn("Failed to persist notification for contact {}: {}", saved.getId(), e.getMessage());
         }
 
-        // Emails dispatch asynchronously so a slow/unconfigured SMTP server
-        // never blocks the visitor's HTTP response. EmailService swallows
-        // failures internally, so these tasks are best-effort by design.
+        // Emails dispatch asynchronously so slow email requests never block the visitor's HTTP response.
+        // EmailService swallows failures internally, so these tasks are best-effort by design.
         java.util.concurrent.CompletableFuture.runAsync(() -> {
-            // IMPORTANT: background pool threads carry a null/system thread-context
-            // classloader. Inside the packaged fat jar, jakarta.mail / jakarta.activation
-            // load their providers (StreamProvider, MailcapRegistryProvider) via
-            // ServiceLoader — which needs the app classloader to find META-INF/services
-            // in nested jars. Without this, sending fails on JDK 21 fat jars with
-            // "Provider ... cannot be found" even though the jars are present.
-            Thread.currentThread().setContextClassLoader(EmailService.class.getClassLoader());
             // Admin email notification — professional HTML template with full inquiry details
             emailService.sendContactNotificationToAdmin(saved);
             // Auto-reply to the visitor — thanks them and promises a 24h response

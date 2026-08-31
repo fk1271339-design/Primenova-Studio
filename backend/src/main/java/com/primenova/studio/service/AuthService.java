@@ -261,20 +261,15 @@ public class AuthService {
     }
 
     // ─── Async email dispatch ──────────────────────────────────
-    // Background pool threads carry a null/system thread-context classloader.
-    // Inside the packaged fat jar, jakarta.mail loads its providers via
-    // ServiceLoader — without the app classloader this fails on JDK 21 fat jars.
 
     private void sendVerificationEmailAsync(String email, String fullName, String token) {
         CompletableFuture.runAsync(() -> {
-            Thread.currentThread().setContextClassLoader(EmailService.class.getClassLoader());
             emailService.sendVerificationEmail(email, fullName, token);
         });
     }
 
     private void sendResetEmailAsync(String email, String fullName, String token) {
         CompletableFuture.runAsync(() -> {
-            Thread.currentThread().setContextClassLoader(EmailService.class.getClassLoader());
             emailService.sendResetPasswordEmail(email, fullName, token);
         });
     }

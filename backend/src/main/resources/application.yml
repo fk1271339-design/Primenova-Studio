@@ -40,30 +40,16 @@ spring:
               - user:email
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
 
-  mail:
-    host: ${SMTP_HOST:smtp.gmail.com}
-    port: ${SMTP_PORT:587}
-    username: ${SMTP_USERNAME:placeholder@gmail.com}
-    password: ${SMTP_PASSWORD:CHANGE_ME}
-    properties:
-      mail:
-        smtp:
-          auth: true
-          starttls:
-            enable: true
-          # Fail fast instead of hanging for 60s+ when SMTP is unreachable
-          connectiontimeout: 5000
-          timeout: 5000
-          writetimeout: 5000
+resend:
+  apiKey: ${RESEND_API_KEY:}
 
 app:
   jwtSecret: ${JWT_SECRET:change-me-to-a-long-random-secret-key-min-32-chars}
   jwtAccessExpirationMs: ${JWT_ACCESS_EXPIRATION:900000}
   jwtRefreshExpirationMs: ${JWT_REFRESH_EXPIRATION:86400000}
   adminEmail: ${ADMIN_EMAIL:hello@primenova.studio}
-  # Sender address on all emails. Defaults to the SMTP username — Gmail rejects
-  # messages whose From differs from the authenticated account.
-  mailFrom: ${SMTP_FROM:${SMTP_USERNAME:placeholder@gmail.com}}
+  # Sender address on all emails. Resend requires a verified sender or onboarding@resend.dev.
+  mailFrom: ${APP_MAIL_FROM:${SMTP_FROM:${SMTP_USERNAME:onboarding@resend.dev}}}
   # Free keyless IP geolocation (ipwho.is). Disable with GEO_LOOKUP_ENABLED=false for offline dev.
   geoApiUrl: ${GEO_API_URL:https://ipwho.is/}
   geoLookupEnabled: ${GEO_LOOKUP_ENABLED:true}

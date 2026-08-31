@@ -53,11 +53,8 @@ public class ConfigStartupValidator {
     @Value("${spring.security.oauth2.client.registration.github.client-secret:}")
     private String githubClientSecret;
 
-    @Value("${spring.mail.username:}")
-    private String smtpUsername;
-
-    @Value("${spring.mail.password:}")
-    private String smtpPassword;
+    @Value("${resend.apiKey:${RESEND_API_KEY:}}")
+    private String resendApiKey;
 
     @Value("${app.frontendUrl:}")
     private String frontendUrl;
@@ -97,10 +94,10 @@ public class ConfigStartupValidator {
                     + "(callback URL: {}/login/oauth2/code/github).", frontendUrl);
         }
 
-        if (isPlaceholder(smtpUsername) || isPlaceholder(smtpPassword)) {
-            log.warn("SMTP_USERNAME / SMTP_PASSWORD are missing or placeholder. Transactional emails "
+        if (isPlaceholder(resendApiKey)) {
+            log.warn("RESEND_API_KEY is missing or placeholder. Transactional emails "
                     + "(verification, password reset, contact notifications) will fail to send. "
-                    + "Configure a Gmail app password at https://myaccount.google.com/apppasswords");
+                    + "Set RESEND_API_KEY in your environment variables.");
         }
 
         if (fatal && isProd) {

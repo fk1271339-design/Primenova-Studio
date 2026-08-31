@@ -15,14 +15,6 @@
     <description>Backend application for PrimeNova Studio</description>
     <properties>
         <java.version>17</java.version>
-        <!--
-          angus-mail 2.0.3: fat jar (Spring Boot repackaged) + JDK 21 pe ServiceLoader
-          se jakarta.mail.util.StreamProvider nahi milta tha (2.0.2 bug) —
-          "Not provider of jakarta.mail.util.StreamProvider was found" error.
-          2.0.3 mein provider loading fix hua hai. IDE (plain classpath) pe chalta tha,
-          isliye yeh sirf packaged jar se chalane par dikhta tha.
-        -->
-        <angus-mail.version>2.0.3</angus-mail.version>
     </properties>
     <dependencies>
         <dependency>
@@ -36,21 +28,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-mongodb</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
-        </dependency>
-        <!--
-          jakarta.mail 2.0.3 (angus-mail) ko angus-activation 2.0.3 chahiye.
-          2.0.1 ke saath fat jar pe "Provider for jakarta.activation.spi.MailcapRegistryProvider
-          cannot be found" error aata hai. Explicit version pin karke mismatch khatam.
-        -->
-        <dependency>
-            <groupId>org.eclipse.angus</groupId>
-            <artifactId>angus-activation</artifactId>
-            <version>2.0.3</version>
-            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.springframework.boot</groupId>

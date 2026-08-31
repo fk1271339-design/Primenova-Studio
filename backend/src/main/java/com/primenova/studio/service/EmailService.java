@@ -1,16 +1,19 @@
 package com.primenova.studio.service;
 
 import com.primenova.studio.model.Contact;
-import jakarta.mail.internet.MimeMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.time.Year;
 import java.time.format.DateTimeFormatter;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class EmailService {
@@ -19,7 +22,10 @@ public class EmailService {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("dd MMM yyyy");
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("hh:mm a");
 
-    private final JavaMailSender mailSender;
+    private final RestClient restClient;
+
+    @Value("${resend.apiKey:${RESEND_API_KEY:}}")
+    private String resendApiKey;
 
     @Value("${app.adminEmail:admin@primenova.studio}")
     private String adminEmail;
@@ -27,23 +33,54 @@ public class EmailService {
     @Value("${app.frontendUrl:http://localhost:5173}")
     private String frontendUrl;
 
-    @Value("${app.mailFrom:placeholder@gmail.com}")
+    @Value("${app.mailFrom:onboarding@resend.dev}")
     private String mailFrom;
 
-    public EmailService(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
+    public EmailService() {
+        this.restClient = RestClient.builder()
+                .baseUrl("https://api.resend.com")
+                .build();
+    }
+
+    public EmailService(RestClient restClient) {
+        this.restClient = restClient;
+    }
+
+    private void sendEmail(String to, String subject, String html, String replyTo) {
+        if (resendApiKey == null || resendApiKey.isBlank()) {
+            log.warn("RESEND_API_KEY is not configured. Email to {} with subject '{}' was not sent.", to, subject);
+            return;
+        }
+
+        try {
+            Map<String, Object> body = new HashMap<>();
+            body.put("from", mailFrom);
+            body.put("to", List.of(to));
+            body.put("subject", subject);
+            body.put("html", html);
+            if (replyTo != null && !replyTo.isBlank()) {
+                body.put("reply_to", replyTo);
+            }
+
+            restClient.post()
+                    .uri("/emails")
+                    .header("Authorization", "Bearer " + resendApiKey)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(body)
+                    .retrieve()
+                    .toBodilessEntity();
+
+            log.info("Email successfully sent via Resend API to recipient: {}", to);
+        } catch (RestClientResponseException e) {
+            log.error("Failed to send email to {} via Resend HTTP API: HTTP {} - Error details: {}",
+                    to, e.getStatusCode(), e.getResponseBodyAsString());
+        } catch (Exception e) {
+            log.error("Failed to send email to {} via Resend HTTP API: {}", to, e.getMessage());
+        }
     }
 
     public void sendVerificationEmail(String recipientEmail, String name, String token) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
-            helper.setTo(recipientEmail);
-            helper.setFrom(mailFrom);
-            helper.setReplyTo(adminEmail);
-            helper.setSubject("Welcome to PrimeNova Studio 🚀 - Verify Email");
-            
             String verifyUrl = frontendUrl + "/verify-email?token=" + token;
             String htmlContent = 
                 "<div style=\"background-color:#09090b; padding:45px 30px; font-family:sans-serif; text-align:center; color:#ffffff; max-width:480px; margin:0 auto; border-radius:20px; border:1px solid rgba(255,255,255,0.06);\">\n" +
@@ -57,8 +94,7 @@ public class EmailService {
                 "  <p style=\"color:#52525b; font-size:11px; margin-top:35px; line-height:1.5;\">If you did not request this account creation, please ignore this email safely.</p>\n" +
                 "</div>";
 
-            helper.setText(htmlContent, true);
-            mailSender.send(message);
+            sendEmail(recipientEmail, "Welcome to PrimeNova Studio 🚀 - Verify Email", htmlContent, adminEmail);
         } catch (Exception e) {
             log.warn("Could not send verification email to {}: {}", recipientEmail, e.getMessage());
         }
@@ -66,14 +102,6 @@ public class EmailService {
 
     public void sendResetPasswordEmail(String recipientEmail, String name, String token) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            
-            helper.setTo(recipientEmail);
-            helper.setFrom(mailFrom);
-            helper.setReplyTo(adminEmail);
-            helper.setSubject("Reset Your Password - PrimeNova Studio 🔑");
-            
             String resetUrl = frontendUrl + "/reset-password?token=" + token;
             String htmlContent = 
                 "<div style=\"background-color:#09090b; padding:45px 30px; font-family:sans-serif; text-align:center; color:#ffffff; max-width:480px; margin:0 auto; border-radius:20px; border:1px solid rgba(255,255,255,0.06);\">\n" +
@@ -87,8 +115,7 @@ public class EmailService {
                 "  <p style=\"color:#52525b; font-size:11px; margin-top:35px; line-height:1.5;\">If you did not request a password reset, please ignore this email safely.</p>\n" +
                 "</div>";
 
-            helper.setText(htmlContent, true);
-            mailSender.send(message);
+            sendEmail(recipientEmail, "Reset Your Password - PrimeNova Studio 🔑", htmlContent, adminEmail);
         } catch (Exception e) {
             log.warn("Could not send password reset email to {}: {}", recipientEmail, e.getMessage());
         }
@@ -101,13 +128,6 @@ public class EmailService {
      */
     public void sendContactNotificationToAdmin(Contact contact) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setTo(adminEmail);
-            helper.setFrom(mailFrom);
-            helper.setSubject("📩 New Contact Inquiry - PrimeNova Studio");
-
             String dashboardUrl = frontendUrl + "/admin/dashboard";
 
             String htmlContent =
@@ -144,9 +164,7 @@ public class EmailService {
                 brandFooter() +
                 "</div>";
 
-            helper.setText(htmlContent, true);
-            mailSender.send(message);
-            log.info("Admin notification email sent for contact inquiry from {}", contact.getEmail());
+            sendEmail(adminEmail, "📩 New Contact Inquiry - PrimeNova Studio", htmlContent, contact.getEmail());
         } catch (Exception e) {
             log.warn("Could not send admin email notification: {}", e.getMessage());
         }
@@ -159,14 +177,6 @@ public class EmailService {
      */
     public void sendAutoReplyEmail(Contact contact) {
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-
-            helper.setTo(contact.getEmail());
-            helper.setFrom(mailFrom);
-            helper.setReplyTo(adminEmail);
-            helper.setSubject("Thank you for contacting PrimeNova Studio 🚀");
-
             String htmlContent =
                 "<div style=\"background-color:#09090b; padding:45px 30px; font-family:Arial, Helvetica, sans-serif; text-align:center; color:#ffffff; max-width:540px; margin:0 auto; border-radius:20px; border:1px solid rgba(255,255,255,0.06);\">\n" +
                 brandHeader() +
@@ -190,9 +200,7 @@ public class EmailService {
                 brandFooter() +
                 "</div>";
 
-            helper.setText(htmlContent, true);
-            mailSender.send(message);
-            log.info("Auto-reply email sent to {}", contact.getEmail());
+            sendEmail(contact.getEmail(), "Thank you for contacting PrimeNova Studio 🚀", htmlContent, adminEmail);
         } catch (Exception e) {
             log.warn("Could not send auto-reply email to {}: {}", contact.getEmail(), e.getMessage());
         }
@@ -224,7 +232,7 @@ public class EmailService {
         return
             "    <tr>\n" +
             "      <td style=\"padding:10px 18px; " + border + "\">\n" +
-            "        <div style=\"font-size:10px; font-weight:bold; letter-spacing:0.1em; color:#8b8b93; margin-bottom:3px;\">" + escapeHtml(label) + "</div>\n" +
+            "        <div style=\"font-size:10px; font-weight:bold; letter-spacing:0.18em; color:#8b8b93; margin-bottom:3px;\">" + escapeHtml(label) + "</div>\n" +
             "        <div style=\"color:#e4e4e7; font-size:13px; font-weight:600; word-break:break-word;\">" + safeValue + "</div>\n" +
             "      </td>\n" +
             "    </tr>\n";
@@ -267,11 +275,6 @@ public class EmailService {
             "  </div>\n";
     }
 
-    /**
-     * Escapes user-supplied values before interpolation into HTML templates.
-     * Defense-in-depth on top of server-side sanitization — prevents broken
-     * markup and HTML injection even if a value slips through.
-     */
     private String escapeHtml(String input) {
         if (input == null) return "";
         return input
