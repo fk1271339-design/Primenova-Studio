@@ -2,10 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import Hero from '../components/Hero';
 import WhyPrimeNova from '../components/WhyPrimeNova';
-import Services from '../components/Services';
-import Portfolio from '../components/Portfolio';
 import Testimonials from '../components/Testimonials';
-import Pricing from '../components/Pricing';
 import Contact from '../components/Contact';
 
 const HomePage: React.FC = () => {
@@ -19,17 +16,8 @@ const HomePage: React.FC = () => {
       {/* Why PrimeNova Advantage */}
       <WhyPrimeNova />
 
-      {/* Capabilities / Services */}
-      <Services />
-
-      {/* Featured Portfolio Works */}
-      <Portfolio />
-
       {/* Client Testimonials & Reviews Carousel */}
       <Testimonials />
-
-      {/* Pricing Options */}
-      <Pricing />
 
       {/* Contact Section */}
       <Contact />
