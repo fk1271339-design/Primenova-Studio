@@ -4,6 +4,7 @@ import Hero from '../components/Hero';
 import WhyPrimeNova from '../components/WhyPrimeNova';
 import Services from '../components/Services';
 import Portfolio from '../components/Portfolio';
+import Testimonials from '../components/Testimonials';
 import Pricing from '../components/Pricing';
 import Contact from '../components/Contact';
 
@@ -23,6 +24,9 @@ const HomePage: React.FC = () => {
 
       {/* Featured Portfolio Works */}
       <Portfolio />
+
+      {/* Client Testimonials & Reviews Carousel */}
+      <Testimonials />
 
       {/* Pricing Options */}
       <Pricing />
@@ -53,13 +57,13 @@ const HomePage: React.FC = () => {
           <div className="mt-8 flex flex-col sm:flex-row gap-4">
             <button
               onClick={() => navigate('/contact')}
-              className="px-8 py-4 rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 text-black font-bold text-sm shadow-xl shadow-amber-500/20 hover:scale-105 transition-all"
+              className="px-8 py-4 rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 text-black font-bold text-sm shadow-xl shadow-amber-500/20 hover:scale-105 transition-all cursor-pointer"
             >
               Get In Touch With Us
             </button>
             <button
               onClick={() => navigate('/pricing')}
-              className="px-8 py-4 rounded-full bg-foreground/5 dark:bg-white/5 border border-foreground/10 text-foreground font-semibold text-sm hover:bg-foreground/10 transition-all"
+              className="px-8 py-4 rounded-full bg-foreground/5 dark:bg-white/5 border border-foreground/10 text-foreground font-semibold text-sm hover:bg-foreground/10 transition-all cursor-pointer"
             >
               View Pricing Models
             </button>
