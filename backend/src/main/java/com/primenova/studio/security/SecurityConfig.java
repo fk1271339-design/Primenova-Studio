@@ -52,7 +52,7 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/api/auth/**", "/api/contact/**", "/login/oauth2/**", "/oauth2/**").permitAll()
+                .requestMatchers("/api/auth/**", "/api/contact/**", "/api/ping", "/login/oauth2/**", "/oauth2/**").permitAll()
                 .requestMatchers("/api/admin/**").hasRole("ADMIN")
                 .requestMatchers("/api/user/**", "/api/chat/**").authenticated()
                 // Everything else (SPA static assets, public pages) is served
