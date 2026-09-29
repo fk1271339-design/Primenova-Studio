@@ -4,6 +4,7 @@ import {
   generateResponse,
   getMemory,
   getInitialChips,
+  getInitialGreeting,
   clearMemory,
   type NovaMemory,
 } from '../utils/novaEngine';
@@ -33,6 +34,16 @@ function renderMarkdown(text: string): React.ReactNode[] {
   lines.forEach((line, i) => {
     let processed: React.ReactNode = line;
 
+    // H3 headings: ### text
+    if (line.startsWith('### ')) {
+      nodes.push(
+        <h3 key={i} className="text-sm font-bold text-white mt-3 mb-1">
+          {line.replace('### ', '')}
+        </h3>
+      );
+      return;
+    }
+
     // Bold: **text**
     if (line.includes('**')) {
       const parts = line.split(/\*\*(.*?)\*\*/g);
@@ -51,8 +62,28 @@ function renderMarkdown(text: string): React.ReactNode[] {
       );
     }
 
-    // Emoji bullet points
-    if (typeof processed === 'string' && /^\s*[🔹✅⏱️🏆⭐🤖✨📧🌐💬📅📄🔗•]/.test(processed)) {
+    // Links: [text](url)
+    if (typeof processed === 'string' && /\[([^\]]+)\]\(([^)]+)\)/.test(processed)) {
+      const parts = processed.split(/(\[[^\]]+\]\([^)]+\))/g);
+      processed = (
+        <span key={`link-${i}`}>
+          {parts.map((part, j) => {
+            const linkMatch = part.match(/\[([^\]]+)\]\(([^)]+)\)/);
+            if (linkMatch) {
+              return (
+                <a key={j} href={linkMatch[2]} className="text-violet-400 hover:text-violet-300 underline underline-offset-2 transition-colors">
+                  {linkMatch[1]}
+                </a>
+              );
+            }
+            return part;
+          })}
+        </span>
+      );
+    }
+
+    // Bullet points
+    if (typeof processed === 'string' && /^\s*[•●🔹✅⏱️🏆⭐🤖✨📧🌐💬📅📄🔗-]/.test(processed)) {
       nodes.push(
         <div key={i} className="pl-2 py-0.5 text-slate-300">
           {processed}
@@ -60,6 +91,8 @@ function renderMarkdown(text: string): React.ReactNode[] {
       );
     } else if (typeof processed === 'string' && processed.trim() === '') {
       nodes.push(<div key={i} className="h-2" />);
+    } else if (typeof processed === 'string' && processed.trim() === '---') {
+      nodes.push(<hr key={i} className="border-white/5 my-2" />);
     } else {
       nodes.push(
         <div key={i} className="text-slate-300">
@@ -104,9 +137,9 @@ const RefreshIcon = (props: React.SVGProps<SVGSVGElement>) => (
   </svg>
 );
 
-const TrashIcon = (props: React.SVGProps<SVGSVGElement>) => (
+const PlusIcon = (props: React.SVGProps<SVGSVGElement>) => (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" {...props}>
-    <path d="M3 6h18" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" />
+    <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
   </svg>
 );
 
@@ -166,17 +199,16 @@ const Particles = () => {
 
 const ThinkingIndicator = () => {
   const thoughts = [
-    "Nova is thinking...",
+    "Novee is thinking...",
     "Understanding your request...",
-    "Searching portfolio...",
-    "Preparing response..."
+    "Preparing response...",
   ];
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setIndex((prev) => (prev + 1) % thoughts.length);
-    }, 850);
+    }, 900);
     return () => clearInterval(interval);
   }, []);
 
@@ -194,43 +226,14 @@ const ThinkingIndicator = () => {
   );
 };
 
-// ─── QUICK ACTIONS DATA ──────────────────────────────────────
+// ─── WELCOME PROMPT CARDS ────────────────────────────────────
 
-const QUICK_ACTIONS = [
-  { title: "Estimate Website Cost", desc: "Calculate pricing & timeline", icon: "💰", gradient: "from-violet-600/10 to-indigo-600/10", explanation: "💰 **Estimate Website Cost** — Is card par click karke aap apni website ka approximate cost aur requirements discuss kar sakte ho." },
-  { title: "AI Consultation", desc: "Explore AI automations", icon: "🤖", gradient: "from-amber-600/10 to-rose-600/10", explanation: "🤖 **AI Consultation** — Isse aap AI solutions, AI automation aur apne business ke liye AI possibilities ke baare mein discuss kar sakte ho." },
-  { title: "Portfolio Projects", desc: "Browse our case studies", icon: "📁", gradient: "from-blue-600/10 to-cyan-600/10", explanation: "📁 **Portfolio Projects** — Is card se aap Primenova Studio ke previous projects aur work explore kar sakte ho." },
-  { title: "UI/UX Design", desc: "Figma wireframing", icon: "🎨", gradient: "from-pink-600/10 to-rose-600/10", explanation: "🎨 **UI/UX Design** — Is option se aap UI/UX design, Figma wireframes aur brand design solutions ke baare mein jaan sakte ho." },
-  { title: "Mobile Apps", desc: "iOS & Android solutions", icon: "📱", gradient: "from-emerald-600/10 to-teal-600/10", explanation: "📱 **Mobile Apps** — Is card se aap iOS aur Android app development solutions aur features ke baare mein discuss kar sakte ho." },
-  { title: "Automation", desc: "Workflow tools & webhooks", icon: "⚡", gradient: "from-purple-600/10 to-violet-600/10", explanation: "⚡ **Automation** — Is option se aap workflow tools, API integrations aur manual tasks automate karne ke solutions explore kar sakte ho." },
+const WELCOME_PROMPTS = [
+  { text: 'Help me build a website', icon: '🌐', gradient: 'from-violet-600/10 to-indigo-600/10' },
+  { text: 'Estimate my project cost', icon: '💰', gradient: 'from-amber-600/10 to-orange-600/10' },
+  { text: 'Show PrimeNova services', icon: '⚡', gradient: 'from-blue-600/10 to-cyan-600/10' },
+  { text: 'Recommend features for my business', icon: '🎯', gradient: 'from-emerald-600/10 to-teal-600/10' },
 ];
-
-const CARD_RESPONSES: Record<string, { text: string; chips: string[] }> = {
-  "Estimate Website Cost": {
-    text: "Sure! Aap website ka cost estimate karwana chahte ho. 👍\n\nMujhe bas kuch details batao — website kis type ki hai, kitne pages chahiye aur kya special features chahiye.\n\nMain uske according aapko estimate samjhane mein help karunga.",
-    chips: ["Starter Website", "Business Site", "E-commerce Store"]
-  },
-  "AI Consultation": {
-    text: "Great! 🤖\n\nAgar aap apne business mein AI use karna chahte ho, toh hum AI automation, AI assistants aur custom AI solutions explore kar sakte hain.\n\nAap mujhe batao aapka business kya karta hai.",
-    chips: ["Custom AI Bot", "Workflow Automation", "LLM Integration"]
-  },
-  "Portfolio Projects": {
-    text: "Sure! 📁\n\nYahan se aap Primenova Studio ke projects aur previous work explore kar sakte ho.\n\nAap kis type ka project dekhna chahoge?",
-    chips: ["Web Apps", "SaaS Projects", "UI/UX Case Studies"]
-  },
-  "UI/UX Design": {
-    text: "Awesome! 🎨\n\nHum modern, interactive aur user-friendly UI/UX design deliver karte hain.\n\nAapko dashboard design, mobile app design, ya website UI review karwana hai?",
-    chips: ["Figma Prototype", "UI Review", "Design System"]
-  },
-  "Mobile Apps": {
-    text: "Perfect! 📱\n\nHum React Native aur Flutter se fast aur responsive mobile apps build karte hain.\n\nAapka app idea kya hai — Android, iOS ya dono ke liye?",
-    chips: ["iOS App", "Android App", "Cross-Platform"]
-  },
-  "Automation": {
-    text: "Superb! ⚡\n\nHum workflow automation, webhooks aur custom backend APIs integrate karke aapka manual kaam zero kar sakte hain.\n\nAap kis process ko automate karna chahte ho?",
-    chips: ["API Integration", "Webhook Setup", "Task Automation"]
-  }
-};
 
 // ─── MAIN COMPONENT ─────────────────────────────────────────
 
@@ -238,16 +241,14 @@ const AIAssistant: React.FC = () => {
   const [memory, setLocalMemory] = useState<NovaMemory>(getMemory);
 
   const [messages, setMessages] = useState<Message[]>([]);
-  const [introStep, setIntroStep] = useState(0);
-  const [, setIntroFinished] = useState(false);
-  const [visibleCardsCount, setVisibleCardsCount] = useState(0);
-  const [activeCardTitle, setActiveCardTitle] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [isThinking, setIsThinking] = useState(false);
   const [suggestionChips, setSuggestionChips] = useState<string[]>(getInitialChips(memory));
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const isWelcomeState = messages.length === 0;
 
   // Auto-scroll
   const scrollToBottom = useCallback(() => {
@@ -260,14 +261,28 @@ const AIAssistant: React.FC = () => {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, isThinking, visibleCardsCount, scrollToBottom]);
+  }, [messages, isThinking, scrollToBottom]);
 
-  // ── Streaming text effect ──
-  const streamText = useCallback((fullText: string, msgId: string, onComplete?: () => void, charDelay = 28) => {
+  // ── Auto-resize textarea ──
+  const resizeTextarea = useCallback(() => {
+    const el = inputRef.current;
+    if (el) {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+    }
+  }, []);
+
+  useEffect(() => {
+    resizeTextarea();
+  }, [inputValue, resizeTextarea]);
+
+  // ── Streaming text effect (faster) ──
+  const streamText = useCallback((fullText: string, msgId: string, onComplete?: () => void) => {
     let charIndex = 0;
+    const charDelay = 12; // faster streaming
 
     const interval = setInterval(() => {
-      charIndex += 1; // 1 char at a time for smooth, readable streaming
+      charIndex += 2; // 2 chars at a time for natural speed
       if (charIndex >= fullText.length) {
         charIndex = fullText.length;
         clearInterval(interval);
@@ -289,171 +304,6 @@ const AIAssistant: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-
-
-  // ── INTRO SEQUENCE CONFIG ──
-  const INTRO_SEQUENCE = useRef([
-    // Step 0: Typing 1
-    { type: 'typing', duration: 1200 },
-    // Step 1: Msg 1
-    { type: 'msg', text: "Hey! I'm Novee 👋", duration: 2200 },
-    // Step 2: Typing 2
-    { type: 'typing', duration: 1200 },
-    // Step 3: Msg 2
-    { type: 'msg', text: "Main Primenova Studio ka AI Assistant hoon.", duration: 2500 },
-    // Step 4: Typing 3
-    { type: 'typing', duration: 1200 },
-    // Step 5: Msg 3
-    { type: 'msg', text: "Main aapko hamari services, projects aur solutions explore karne mein help kar sakta hoon.", duration: 3200 },
-    // Step 6: Typing 4
-    { type: 'typing', duration: 1200 },
-    // Step 7: Msg 4
-    { type: 'msg', text: "Chaliye, main aapko quickly bataata hoon ki aap neeche diye gaye options se kya explore kar sakte ho.", duration: 3200 },
-
-    // Step 8: Typing Card 1
-    { type: 'typing', duration: 1200 },
-    // Step 9: Card 1 Explain + Reveal
-    { type: 'card_explain', cardIndex: 0, text: QUICK_ACTIONS[0].explanation, duration: 3500 },
-
-    // Step 10: Typing Card 2
-    { type: 'typing', duration: 1200 },
-    // Step 11: Card 2 Explain + Reveal
-    { type: 'card_explain', cardIndex: 1, text: QUICK_ACTIONS[1].explanation, duration: 3500 },
-
-    // Step 12: Typing Card 3
-    { type: 'typing', duration: 1200 },
-    // Step 13: Card 3 Explain + Reveal
-    { type: 'card_explain', cardIndex: 2, text: QUICK_ACTIONS[2].explanation, duration: 3500 },
-
-    // Step 14: Typing Card 4
-    { type: 'typing', duration: 1200 },
-    // Step 15: Card 4 Explain + Reveal
-    { type: 'card_explain', cardIndex: 3, text: QUICK_ACTIONS[3].explanation, duration: 3500 },
-
-    // Step 16: Typing Card 5
-    { type: 'typing', duration: 1200 },
-    // Step 17: Card 5 Explain + Reveal
-    { type: 'card_explain', cardIndex: 4, text: QUICK_ACTIONS[4].explanation, duration: 3500 },
-
-    // Step 18: Typing Card 6
-    { type: 'typing', duration: 1200 },
-    // Step 19: Card 6 Explain + Reveal
-    { type: 'card_explain', cardIndex: 5, text: QUICK_ACTIONS[5].explanation, duration: 3500 },
-
-    // Step 20: Typing Final Msg
-    { type: 'typing', duration: 1000 },
-    // Step 21: Final Msg
-    { type: 'msg', text: "Ab aap kisi bhi option par click karke explore kar sakte ho. 😊", duration: 1800 },
-  ]).current;
-
-  // Deterministic State Machine for Onboarding Sequence
-  useEffect(() => {
-    if (introStep >= INTRO_SEQUENCE.length) {
-      setIntroFinished(true);
-      setVisibleCardsCount(6);
-      setIsThinking(false);
-      return;
-    }
-
-    const step = INTRO_SEQUENCE[introStep];
-
-    const timer = setTimeout(() => {
-      if (step.type === 'typing') {
-        setIsThinking(true);
-      } else if (step.type === 'msg') {
-        setIsThinking(false);
-        if (step.text) {
-          const msgObj: Message = {
-            id: genId(),
-            sender: 'ai',
-            text: step.text,
-            displayText: step.text,
-            timestamp: new Date(),
-            isStreaming: false,
-          };
-          setMessages(prev => [...prev, msgObj]);
-        }
-      } else if (step.type === 'card_explain') {
-        setIsThinking(false);
-        if (step.text) {
-          const msgObj: Message = {
-            id: genId(),
-            sender: 'ai',
-            text: step.text,
-            displayText: step.text,
-            timestamp: new Date(),
-            isStreaming: false,
-          };
-          setMessages(prev => [...prev, msgObj]);
-        }
-        if (step.cardIndex !== undefined) {
-          setVisibleCardsCount(step.cardIndex + 1);
-        }
-      }
-
-      setIntroStep(prev => prev + 1);
-    }, step.duration);
-
-    return () => clearTimeout(timer);
-  }, [introStep]);
-
-  // Safety Fallback Timer: guarantees all 6 cards become visible after 65s
-  useEffect(() => {
-    const fallbackTimer = setTimeout(() => {
-      setVisibleCardsCount(6);
-      setIntroFinished(true);
-    }, 65000);
-
-    return () => clearTimeout(fallbackTimer);
-  }, []);
-
-  // ── Card click handler with tailored responses ──
-  const handleCardClick = useCallback((title: string) => {
-    if (isThinking) return;
-
-    setActiveCardTitle(title);
-    setTimeout(() => setActiveCardTitle(null), 500);
-
-    const userMsg: Message = {
-      id: genId(),
-      sender: 'user',
-      text: title,
-      displayText: title,
-      timestamp: new Date(),
-      isStreaming: false,
-    };
-
-    setMessages(prev => [...prev, userMsg]);
-    setIsThinking(true);
-
-    const cardResponse = CARD_RESPONSES[title];
-    const thinkTime = 1400;
-
-    setTimeout(() => {
-      const currentMemory = getMemory();
-      const aiMsgId = genId();
-
-      const simpleHistory = messages.map((m) => ({ sender: m.sender, text: m.text }));
-      const responseText = cardResponse ? cardResponse.text : generateResponse(title, currentMemory, simpleHistory).text;
-      const chips = cardResponse ? cardResponse.chips : generateResponse(title, currentMemory, simpleHistory).suggestionChips;
-
-      const aiMsg: Message = {
-        id: aiMsgId,
-        sender: 'ai',
-        text: responseText,
-        displayText: '',
-        timestamp: new Date(),
-        isStreaming: true,
-      };
-
-      setMessages(prev => [...prev, aiMsg]);
-      setIsThinking(false);
-      setSuggestionChips(chips);
-
-      streamText(responseText, aiMsgId, undefined, 28);
-    }, thinkTime);
-  }, [isThinking, messages, streamText]);
-
   // ── Send message handler ──
   const handleSendMessage = useCallback((text: string) => {
     if (!text.trim() || isThinking) return;
@@ -461,8 +311,8 @@ const AIAssistant: React.FC = () => {
     const userMsg: Message = {
       id: genId(),
       sender: 'user',
-      text,
-      displayText: text,
+      text: text.trim(),
+      displayText: text.trim(),
       timestamp: new Date(),
       isStreaming: false,
     };
@@ -471,18 +321,29 @@ const AIAssistant: React.FC = () => {
     setInputValue('');
     setIsThinking(true);
 
-    // Simulate thinking delay (1500ms to cycle thoughts)
-    const thinkTime = 1600;
+    // Reset textarea height
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+    }
+
+    const thinkTime = 800 + Math.random() * 600; // 0.8–1.4s
 
     setTimeout(() => {
       const currentMemory = getMemory();
+      const simpleHistory = [...messages, userMsg].map((m) => ({ sender: m.sender, text: m.text }));
 
-      if (currentMemory.askedForName && !currentMemory.userName && text.trim().length <= 20) {
-        currentMemory.askedForName = true;
+      let response;
+      try {
+        response = generateResponse(text, currentMemory, simpleHistory);
+      } catch {
+        response = {
+          text: "Sorry, I couldn't process that right now. Please try again.",
+          followUpQuestions: [],
+          suggestionChips: getInitialChips(currentMemory),
+          intent: 'error',
+        };
       }
 
-      const simpleHistory = [...messages, userMsg].map((m) => ({ sender: m.sender, text: m.text }));
-      const response = generateResponse(text, currentMemory, simpleHistory);
       setLocalMemory(getMemory());
 
       const aiMsgId = genId();
@@ -499,7 +360,6 @@ const AIAssistant: React.FC = () => {
       setIsThinking(false);
       setSuggestionChips(response.suggestionChips);
 
-      // Start streaming
       streamText(response.text, aiMsgId);
     }, thinkTime);
   }, [isThinking, messages, streamText]);
@@ -537,42 +397,41 @@ const AIAssistant: React.FC = () => {
     }
   }, [messages, handleSendMessage]);
 
-  // ── Clear chat ──
-  const handleClearChat = useCallback(() => {
+  // ── New Chat ──
+  const handleNewChat = useCallback(() => {
     clearMemory();
     const freshMemory = getMemory();
     setLocalMemory(freshMemory);
     setMessages([]);
-    setIntroFinished(false);
-    setVisibleCardsCount(0);
-    setActiveCardTitle(null);
     setSuggestionChips(getInitialChips(freshMemory));
+    setInputValue('');
+    setIsThinking(false);
   }, []);
+
+  // ── Keyboard: Shift+Enter → newline, Enter → send ──
+  const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage(inputValue);
+    }
+  }, [inputValue, handleSendMessage]);
 
   return (
     <section className="relative w-full min-h-screen py-0 px-4 md:px-8 flex flex-col items-center select-none pt-[110px]">
       {/* ── Premium Background Layer ── */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden bg-[#070709]">
-        {/* Animated Grid */}
         <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808006_1px,transparent_1px),linear-gradient(to_bottom,#80808006_1px,transparent_1px)] bg-[size:32px_32px] opacity-75" />
-
-        {/* Gradient Orbs */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-[380px] bg-gradient-to-b from-violet-900/10 via-purple-900/3 to-transparent blur-[120px] rounded-full pointer-events-none animate-pulse duration-10000" />
         <div className="absolute bottom-10 right-10 w-[280px] h-[280px] bg-amber-500/[0.02] blur-[100px] rounded-full pointer-events-none" />
         <div className="absolute top-1/3 left-10 w-[220px] h-[220px] bg-indigo-500/[0.02] blur-[90px] rounded-full pointer-events-none" />
-
-        {/* SVG Noise Filter Overlay */}
         <div className="absolute inset-0 opacity-[0.02] mix-blend-overlay" style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`
         }} />
-
-        {/* Floating Particles */}
         <Particles />
       </div>
 
-      {/* ── Spacing Target Spacers & Hero ── */}
+      {/* ── Hero Header ── */}
       <div className="relative z-10 text-center max-w-2xl mx-auto flex flex-col items-center">
-        {/* AI Powered Badge */}
         <m.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -583,7 +442,6 @@ const AIAssistant: React.FC = () => {
           AI-POWERED CONSULTANT
         </m.div>
 
-        {/* Main Heading */}
         <m.h2
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -593,7 +451,6 @@ const AIAssistant: React.FC = () => {
           Meet your <span className="bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 bg-clip-text text-transparent">always-on</span> digital assistant.
         </m.h2>
 
-        {/* Description */}
         <m.p
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -603,7 +460,6 @@ const AIAssistant: React.FC = () => {
           Helping businesses build modern websites, AI solutions, branding, automation, and scalable digital products.
         </m.p>
 
-        {/* CTA Buttons */}
         <m.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
@@ -614,7 +470,7 @@ const AIAssistant: React.FC = () => {
             onClick={() => inputRef.current?.focus()}
             className="flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-semibold text-xs hover:shadow-[0_0_15px_rgba(109,40,217,0.35)] hover:scale-105 active:scale-95 transition-all duration-300"
           >
-            ✨ Try Nova
+            ✨ Try Novee
           </button>
           <a
             href="/portfolio"
@@ -625,7 +481,7 @@ const AIAssistant: React.FC = () => {
         </m.div>
       </div>
 
-      {/* ── Chat Container (ChatGPT/Claude styled glass box) ── */}
+      {/* ── Chat Container ── */}
       <m.div
         initial={{ opacity: 0, y: 25 }}
         animate={{ opacity: 1, y: 0 }}
@@ -640,17 +496,14 @@ const AIAssistant: React.FC = () => {
             height: 'min(740px, 78vh)',
           }}
         >
-          {/* AI Header */}
+          {/* ── Header ── */}
           <div className="px-5 py-3 border-b border-white/5 flex items-center justify-between shrink-0 bg-white/[0.01]">
             <div className="flex items-center gap-3">
-              {/* Redesigned Avatar */}
               <div className="relative">
                 <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white font-bold font-display shadow-md shadow-violet-500/20">
                   N
                 </div>
-                {/* Glowing ring while generating */}
                 <div className={`absolute inset-0 rounded-full bg-gradient-to-tr from-violet-500 to-indigo-500 blur-md transition-opacity duration-300 ${isThinking ? 'opacity-80 animate-pulse' : 'opacity-25'}`} />
-                {/* Animated Online indicator */}
                 <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#0a0a0c] animate-pulse" />
               </div>
               <div>
@@ -661,28 +514,73 @@ const AIAssistant: React.FC = () => {
                   </span>
                 </div>
                 <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
-                  <span>AI Consultant</span>
+                  <span>PrimeNova AI Assistant</span>
                   <span className="w-1 h-1 rounded-full bg-white/20" />
                   <span className="text-emerald-400 font-medium">Online</span>
-                  <span className="w-1 h-1 rounded-full bg-white/20" />
-                  <span>Avg. response &lt;2s</span>
                 </div>
               </div>
             </div>
 
             <div className="flex items-center gap-1">
               <button
-                onClick={handleClearChat}
-                className="p-2 rounded-full hover:bg-white/5 transition-colors text-slate-400 hover:text-white"
-                title="Clear chat"
+                onClick={handleNewChat}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full hover:bg-white/5 transition-colors text-slate-400 hover:text-white text-[11px] font-medium border border-white/5 hover:border-white/10"
+                title="New Chat"
               >
-                <TrashIcon className="w-4 h-4" />
+                <PlusIcon className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">New Chat</span>
               </button>
             </div>
           </div>
 
-          {/* Messages Body */}
+          {/* ── Messages Body ── */}
           <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col gap-5 scroll-smooth">
+
+            {/* Welcome State */}
+            {isWelcomeState && !isThinking && (
+              <m.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="flex flex-col items-center justify-center flex-1 min-h-[300px] gap-6"
+              >
+                {/* Welcome avatar */}
+                <div className="relative">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold font-display shadow-xl shadow-violet-500/25">
+                    N
+                  </div>
+                  <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-violet-500 to-indigo-500 blur-xl opacity-30" />
+                </div>
+
+                {/* Welcome text */}
+                <div className="text-center max-w-md">
+                  <h3 className="text-lg font-bold text-white mb-2">Hey! I'm Novee 👋</h3>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    Your PrimeNova Studio AI assistant. I can help you plan websites, estimate costs, explore services, and guide your project from idea to launch.
+                  </p>
+                </div>
+
+                {/* Prompt Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 w-full max-w-lg">
+                  {WELCOME_PROMPTS.map((prompt) => (
+                    <m.button
+                      key={prompt.text}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => handleSendMessage(prompt.text)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-xl border border-white/5 hover:border-violet-500/30 transition-all duration-300 text-left bg-gradient-to-br ${prompt.gradient} group`}
+                    >
+                      <span className="text-lg">{prompt.icon}</span>
+                      <span className="text-[12px] font-medium text-slate-300 group-hover:text-white transition-colors leading-tight">
+                        {prompt.text}
+                      </span>
+                    </m.button>
+                  ))}
+                </div>
+              </m.div>
+            )}
+
+            {/* Chat Messages */}
             <AP initial={false}>
               {messages.map((msg) => (
                 <m.div
@@ -699,10 +597,10 @@ const AIAssistant: React.FC = () => {
                     </div>
                   )}
 
-                  <div className={`flex flex-col max-w-[82%] ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
+                  <div className={`flex flex-col max-w-[82%] sm:max-w-[75%] ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}>
                     {/* Message Bubble */}
                     <div
-                      className={`px-4 py-3 text-sm sm:text-[14.5px] leading-relaxed shadow-sm ${msg.sender === 'user'
+                      className={`px-4 py-3 text-sm sm:text-[14.5px] leading-relaxed shadow-sm break-words ${msg.sender === 'user'
                         ? 'bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-2xl rounded-tr-md font-medium'
                         : 'bg-white/[0.03] border border-white/5 text-white rounded-2xl rounded-tl-md shadow-lg'
                         }`}
@@ -715,7 +613,7 @@ const AIAssistant: React.FC = () => {
                           )}
                         </div>
                       ) : (
-                        msg.displayText
+                        <div className="whitespace-pre-wrap">{msg.displayText}</div>
                       )}
                     </div>
 
@@ -785,7 +683,7 @@ const AIAssistant: React.FC = () => {
               ))}
             </AP>
 
-            {/* Dynamic Thinking Status */}
+            {/* Thinking */}
             {isThinking && (
               <m.div
                 initial={{ opacity: 0, y: 10 }}
@@ -802,31 +700,8 @@ const AIAssistant: React.FC = () => {
             )}
           </div>
 
-          {/* ── Quick Actions (Gradual One-by-One Reveal & Interactive) ── */}
-          {visibleCardsCount > 0 && (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 px-4 py-2 border-t border-white/5 bg-white/[0.01] overflow-x-auto shrink-0 select-none">
-              {QUICK_ACTIONS.slice(0, visibleCardsCount).map((action) => (
-                <m.button
-                  key={action.title}
-                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  transition={{ duration: 0.3, ease: 'easeOut' }}
-                  onClick={() => handleCardClick(action.title)}
-                  disabled={isThinking}
-                  className={`px-2.5 py-2 rounded-xl border border-white/5 hover:border-violet-500/40 transition-all duration-300 text-left bg-gradient-to-br ${action.gradient} hover:scale-[1.02] active:scale-95 group shrink-0 ${
-                    activeCardTitle === action.title ? 'ring-2 ring-violet-500/60 scale-95 border-violet-500' : ''
-                  }`}
-                >
-                  <div className="text-sm mb-0.5">{action.icon}</div>
-                  <div className="text-[10px] font-bold text-white group-hover:text-violet-400 transition-colors whitespace-nowrap overflow-hidden text-ellipsis">{action.title}</div>
-                  <div className="text-[8.5px] text-slate-400 mt-0.5 leading-tight line-clamp-1">{action.desc}</div>
-                </m.button>
-              ))}
-            </div>
-          )}
-
-          {/* Standard Suggestion Chips (Used mid-conversation after user interacts) */}
-          {messages.some(m => m.sender === 'user') && !isThinking && (
+          {/* ── Contextual Suggestion Chips ── */}
+          {!isWelcomeState && !isThinking && suggestionChips.length > 0 && (
             <div className="px-5 py-2.5 border-t border-white/5 flex gap-2 overflow-x-auto scrollbar-hide shrink-0">
               <AP mode="popLayout">
                 {suggestionChips.slice(0, 5).map((chip) => (
@@ -847,7 +722,7 @@ const AIAssistant: React.FC = () => {
             </div>
           )}
 
-          {/* Input Footer */}
+          {/* ── Input Footer ── */}
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -855,54 +730,34 @@ const AIAssistant: React.FC = () => {
             }}
             className="p-4 border-t border-white/5 bg-white/[0.01] flex flex-col gap-2 shrink-0"
           >
-            <div className="relative flex items-center bg-white/[0.02] border border-white/5 focus-within:border-violet-500/40 focus-within:ring-1 focus-within:ring-violet-500/20 rounded-2xl p-1.5 transition-all duration-300 shadow-inner">
-              {/* Attachment icon */}
-              <button type="button" className="p-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-colors" title="Add attachment">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.44 11.05-9.19 9.19a6 6 0 0 1-8.49-8.49l8.57-8.57A4 4 0 1 1 18 8.84l-8.59 8.57a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
-              </button>
-
-              {/* Voice icon */}
-              <button type="button" className="p-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-colors" title="Voice input">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" /></svg>
-              </button>
-
-              <input
+            <div className="relative flex items-end bg-white/[0.02] border border-white/5 focus-within:border-violet-500/40 focus-within:ring-1 focus-within:ring-violet-500/20 rounded-2xl p-1.5 transition-all duration-300 shadow-inner">
+              <textarea
                 ref={inputRef}
-                type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                placeholder={isThinking ? 'Thinking...' : 'Ask Novee anything...'}
+                onKeyDown={handleKeyDown}
+                placeholder={isThinking ? 'Novee is thinking...' : 'Ask Novee anything...'}
                 disabled={isThinking}
-                className="flex-1 px-3 bg-transparent text-white placeholder:text-slate-500 text-sm focus:outline-none disabled:opacity-60"
+                rows={1}
+                className="flex-1 px-3 py-2 bg-transparent text-white placeholder:text-slate-500 text-sm focus:outline-none disabled:opacity-60 resize-none max-h-[120px] leading-relaxed"
               />
-
-              {/* Emoji icon */}
-              <button type="button" className="p-2.5 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 transition-colors mr-1" title="Emojis">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10" /><path d="M8 14s1.5 2 4 2 4-2 4-2" /><line x1="9" x2="9.01" y1="9" y2="9" /><line x1="15" x2="15.01" y1="9" y2="9" /></svg>
-              </button>
 
               {/* Send button */}
               <button
                 type="submit"
                 disabled={isThinking || !inputValue.trim()}
-                className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-violet-500/20 transition-all duration-300 active:scale-95 disabled:opacity-40 shrink-0"
+                className="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-r from-violet-600 to-indigo-600 text-white hover:shadow-lg hover:shadow-violet-500/20 transition-all duration-300 active:scale-95 disabled:opacity-40 shrink-0 self-end"
               >
                 <SendIcon className="w-4.5 h-4.5" />
               </button>
             </div>
+
+            <p className="text-[10px] text-slate-600 text-center">
+              Novee is an AI consultant and may occasionally produce inaccurate information. • Powered by PrimeNova Studio
+            </p>
           </form>
         </div>
       </m.div>
-
-      {/* Bottom tagline */}
-      <m.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8 }}
-        className="relative z-10 text-[11px] text-slate-600 mt-4 text-center pb-8"
-      >
-        Novee is an AI consultant and may occasionally produce inaccurate information. • Powered by PrimeNova Studio
-      </m.p>
     </section>
   );
 };
