@@ -5,7 +5,6 @@
 import { portfolioData } from '../data/portfolioData';
 import {
   SERVICES,
-  PRICING_TIERS,
   COST_COMPONENTS,
   ABOUT_PRIMENOVA,
   type ServiceInfo,
@@ -175,7 +174,7 @@ export function detectLanguage(text: string): Language {
 function detectIntent(
   input: string,
   memory: NovaMemory,
-  history: SimpleMessage[]
+  _history: SimpleMessage[]
 ): Intent {
   const n = input.toLowerCase().trim();
   const words = n.split(/\s+/);
@@ -1115,7 +1114,7 @@ function handlePricingInquiry(memory: NovaMemory, lang: Language): NovaResponse 
   };
 }
 
-function handleServiceInquiry(memory: NovaMemory, lang: Language): NovaResponse {
+function handleServiceInquiry(_memory: NovaMemory, lang: Language): NovaResponse {
   const serviceList = SERVICES.map(s => `• **${s.name}** — ${s.startingPrice}+`).join('\n');
 
   return {
@@ -1179,7 +1178,7 @@ function handleFeatureRequest(input: string, memory: NovaMemory, lang: Language)
   };
 }
 
-function handlePortfolioInquiry(memory: NovaMemory, lang: Language): NovaResponse {
+function handlePortfolioInquiry(_memory: NovaMemory, lang: Language): NovaResponse {
   const projNames = portfolioData.projects
     .map(p => `• **${p.title}** — ${p.category}`)
     .join('\n');
@@ -1196,7 +1195,7 @@ function handlePortfolioInquiry(memory: NovaMemory, lang: Language): NovaRespons
   };
 }
 
-function handleAboutPrimeNova(memory: NovaMemory, lang: Language): NovaResponse {
+function handleAboutPrimeNova(_memory: NovaMemory, lang: Language): NovaResponse {
   const about = ABOUT_PRIMENOVA;
   return {
     text: pick(lang, {
@@ -1432,7 +1431,6 @@ function handleGeneralQuestion(input: string, memory: NovaMemory, lang: Language
 
 function handleSmartFollowUp(input: string, memory: NovaMemory, lang: Language): NovaResponse {
   // Try to understand what field this answers based on context
-  const lower = input.toLowerCase().trim();
 
   // Could be an industry/type answer
   const industry = detectIndustry(input);
@@ -1514,7 +1512,7 @@ function handleContextualQuestion(input: string, memory: NovaMemory, lang: Langu
   return handleUnclear(input, memory, lang);
 }
 
-function respondAboutService(service: ServiceInfo, memory: NovaMemory, lang: Language): NovaResponse {
+function respondAboutService(service: ServiceInfo, _memory: NovaMemory, lang: Language): NovaResponse {
   const featureList = service.features.map(f => `• ${f}`).join('\n');
   const techList = service.technologies.join(', ');
 
@@ -1532,7 +1530,7 @@ function respondAboutService(service: ServiceInfo, memory: NovaMemory, lang: Lan
   };
 }
 
-function handleUnclear(input: string, memory: NovaMemory, lang: Language): NovaResponse {
+function handleUnclear(_input: string, memory: NovaMemory, lang: Language): NovaResponse {
   // Try to be helpful based on current conversation context
   if (memory.conversationStage !== 'initial' && memory.industry) {
     return {

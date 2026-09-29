@@ -4,7 +4,6 @@ import {
   generateResponse,
   getMemory,
   getInitialChips,
-  getInitialGreeting,
   clearMemory,
   type NovaMemory,
 } from '../utils/novaEngine';
