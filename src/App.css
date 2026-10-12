@@ -8,7 +8,7 @@
    ────────────────────────────────────────────────────────────── */
 header nav,
 header > div {
-  transition: background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+  transition: background 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease, color 0.35s ease;
 }
 
 header nav:hover,
@@ -18,12 +18,104 @@ header > div:hover {
     inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
+/* Light Theme Navbar Glass Overrides */
+.light header nav,
+.light header > div {
+  background: rgba(255, 255, 255, 0.82) !important;
+  border-color: rgba(34, 26, 19, 0.12) !important;
+  box-shadow:
+    0 8px 30px rgba(34, 26, 19, 0.07),
+    0 1px 2px rgba(34, 26, 19, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
 .light header nav:hover,
 .light header > div:hover {
   box-shadow:
-    0 10px 40px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+    0 12px 38px rgba(34, 26, 19, 0.11),
+    inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(221, 122, 66, 0.28) !important;
 }
+
+/* Light Theme Navbar Brand & Links */
+.light header nav a span.font-display,
+.light header > div a span.font-display {
+  color: #1a1410 !important;
+}
+
+.light header nav .flex-1 a > span.relative {
+  color: #574c43;
+}
+
+.light header nav .flex-1 a:hover > span.relative {
+  color: #1a1410 !important;
+}
+
+.light header nav .flex-1 a > span.font-semibold {
+  color: #dd7a42 !important;
+}
+
+.light header nav .flex-1 a svg {
+  color: #8c7e75 !important;
+}
+
+/* Light Theme Navbar Buttons */
+.light header nav button[aria-label="Toggle Theme"],
+.light header > div button[aria-label="Toggle Theme"],
+.light header > div button[aria-label="Toggle Navigation Drawer"] {
+  color: #574c43 !important;
+}
+
+.light header nav button[aria-label="Toggle Theme"]:hover,
+.light header > div button[aria-label="Toggle Theme"]:hover {
+  color: #dd7a42 !important;
+  background: rgba(221, 122, 66, 0.1) !important;
+}
+
+.light header nav button:has(img),
+.light header nav button:has(div.rounded-lg) {
+  background: rgba(255, 255, 255, 0.8) !important;
+  border-color: rgba(34, 26, 19, 0.12) !important;
+}
+
+.light header nav button:has(img) span,
+.light header nav button:has(div.rounded-lg) span {
+  color: #1a1410 !important;
+}
+
+.light header nav button.text-white\/70 {
+  color: #3b3027 !important;
+  border-color: rgba(34, 26, 19, 0.15) !important;
+  background: rgba(255, 255, 255, 0.6) !important;
+}
+
+.light header nav button.text-white\/70:hover {
+  background: rgba(255, 255, 255, 0.95) !important;
+  color: #1a1410 !important;
+  border-color: rgba(221, 122, 66, 0.35) !important;
+}
+
+/* Light Theme Mega Menus & Popups */
+.light header [class*="rounded-2xl"],
+.light header [class*="rounded-3xl"] {
+  background: rgba(255, 255, 255, 0.95) !important;
+  border-color: rgba(34, 26, 19, 0.1) !important;
+  box-shadow: 0 16px 40px rgba(34, 26, 19, 0.12) !important;
+}
+
+.light header [class*="rounded-2xl"] span,
+.light header [class*="rounded-3xl"] span,
+.light header [class*="rounded-2xl"] p,
+.light header [class*="rounded-3xl"] p,
+.light header [class*="rounded-3xl"] a {
+  color: #3b3027 !important;
+}
+
+.light header [class*="rounded-2xl"] a:hover,
+.light header [class*="rounded-3xl"] a:hover {
+  background: rgba(221, 122, 66, 0.08) !important;
+}
+
 
 /* ──────────────────────────────────────────────────────────────
    HERO SECTION
