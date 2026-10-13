@@ -22,9 +22,6 @@ const PortfolioProjects: React.FC = () => {
               <span className="text-xs font-mono tracking-[0.25em] text-blue-400 uppercase font-semibold">
                 MY PROJECTS
               </span>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-display text-white mt-1">
-                Featured <span className="text-blue-400">Projects</span>
-              </h2>
             </div>
           </div>
           <p className="text-xs sm:text-sm font-mono text-zinc-400 max-w-xs">
@@ -96,6 +93,18 @@ const PortfolioProjects: React.FC = () => {
                       View Details
                       <ArrowUpRightIcon className="w-3.5 h-3.5" />
                     </button>
+                    {project.liveUrl && (
+                      <a
+                        href={project.liveUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-4 py-2 rounded-xl bg-blue-600/20 border border-blue-500/40 text-xs font-semibold text-blue-400 hover:bg-blue-600 hover:text-white hover:border-blue-500 transition-all flex items-center gap-1.5"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        Live Site
+                        <ExternalLinkIcon className="w-3.5 h-3.5" />
+                      </a>
+                    )}
                   </div>
                 </div>
               </div>
