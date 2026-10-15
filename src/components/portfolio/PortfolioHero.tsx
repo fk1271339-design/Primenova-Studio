@@ -147,34 +147,47 @@ const PortfolioHero: React.FC<PortfolioHeroProps> = ({ onNavigate }) => {
       >
         {/* ══════ Left Column: Typography & Identity ══════ */}
         <div className="lg:col-span-7 flex flex-col justify-center">
-          {/* Mono tag line */}
-          <motion.div variants={fadeUp} className="mb-5 flex items-center gap-3">
-            <span className="h-px w-8 bg-blue-500/60"></span>
-            <span className="text-[11px] font-mono tracking-[0.3em] text-blue-400 uppercase font-medium">
+          {/* Classic serif italic tagline */}
+          <motion.div variants={fadeUp} className="mb-6 flex items-center gap-4">
+            <span className="h-px w-10 bg-gradient-to-r from-violet-400/60 to-transparent"></span>
+            <span className="font-classic italic text-sm sm:text-base tracking-wide text-zinc-300/80">
               Hello, I'm
             </span>
           </motion.div>
 
-          {/* Giant display name */}
-          <motion.div variants={fadeUp} className="flex flex-col font-hero-display leading-[0.88] select-none">
-            <span className="text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] font-bold text-white uppercase tracking-tight">
-              FAIZ
-            </span>
-            <span className="text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] font-bold text-stroke-white uppercase tracking-tight my-0.5 hover:text-white/10 transition-colors duration-500 cursor-default">
+          {/* Giant display name — MD + FAIZ */}
+          <motion.div variants={fadeUp} className="flex flex-col select-none">
+            {/* First name with serif 'MD' prefix */}
+            <div className="flex items-baseline gap-3 lg:gap-5">
+              <span className="font-classic italic text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-violet-300/70 font-light tracking-wide">
+                Md
+              </span>
+              <span className="font-hero-display text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] font-bold text-white uppercase tracking-tight leading-[0.88]">
+                FAIZ
+              </span>
+            </div>
+
+            {/* SOFTWARE — gradient shimmer text */}
+            <span className="font-hero-display text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] font-bold uppercase tracking-tight leading-[0.88] my-1 text-gradient-shimmer cursor-default">
               SOFTWARE
             </span>
-            <span className="text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] font-bold text-white uppercase tracking-tight">
+
+            {/* ENGINEER — solid white */}
+            <span className="font-hero-display text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] font-bold text-white uppercase tracking-tight leading-[0.88]">
               ENGINEER
             </span>
           </motion.div>
 
-          {/* Subtitle */}
+          {/* Decorative accent line */}
+          <motion.div variants={fadeUp} className="mt-6 w-48 hero-line-accent"></motion.div>
+
+          {/* Subtitle — classic serif italic mixed with modern */}
           <motion.p
             variants={fadeUp}
-            className="mt-7 max-w-lg text-[13px] sm:text-sm md:text-base text-zinc-400 font-light leading-relaxed tracking-wide"
+            className="mt-5 max-w-lg text-[13px] sm:text-sm md:text-base text-zinc-400 font-light leading-relaxed tracking-wide"
           >
-            Building high-performance digital architectures where precision meets
-            cinematic experience. Specialized in scalable systems and interactive
+            Building <span className="font-classic italic text-zinc-300">high-performance</span> digital architectures where precision meets
+            cinematic experience. Specialized in <span className="font-classic italic text-zinc-300">scalable systems</span> and interactive
             engineering.
           </motion.p>
 

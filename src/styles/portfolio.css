@@ -1,13 +1,18 @@
 /* ══════════════════════════════════════════════════════════════
    PORTFOLIO STYLES — FAIZ // SOFTWARE ENGINEER
-   Cinematic, dark, editorial motion design theme
+   Classic + Modern editorial design — dark cinematic theme
    ══════════════════════════════════════════════════════════════ */
-@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;0,800;0,900;1,400;1,500;1,600;1,700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap');
 
 /* Ultra-tall condensed hero typography font */
 .font-hero-display {
   font-family: 'Bebas Neue', sans-serif;
   letter-spacing: 0.02em;
+}
+
+/* Classic serif font for elegant accents */
+.font-classic {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
 }
 
 /* Custom stroke text for 'SOFTWARE' in Hero */
@@ -25,6 +30,27 @@
 .text-stroke-white:hover {
   -webkit-text-stroke-color: #ffffff;
   transition: all 0.4s ease;
+}
+
+/* Gradient shimmer text effect */
+.text-gradient-shimmer {
+  background: linear-gradient(135deg, #ffffff 0%, #a78bfa 30%, #818cf8 50%, #60a5fa 70%, #ffffff 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer-text 4s linear infinite;
+}
+
+@keyframes shimmer-text {
+  0% { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* Elegant thin line decoration */
+.hero-line-accent {
+  height: 1px;
+  background: linear-gradient(to right, rgba(168,139,250,0.6) 0%, rgba(96,165,250,0.3) 50%, transparent 100%);
 }
 
 /* Warm Golden Spotlight Halo — cinematic ambient glow */
