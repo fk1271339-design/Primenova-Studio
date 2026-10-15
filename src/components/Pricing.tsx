@@ -165,13 +165,17 @@ const Pricing: React.FC = () => {
   return (
     <section id="pricing" className="relative w-full max-w-6xl py-24 px-4 md:px-8 border-b border-foreground/5">
       <div className="text-center max-w-3xl mx-auto mb-12">
-        <div className="text-xs font-mono font-bold tracking-widest text-amber-400 uppercase">
+        <div className="text-[11px] font-mono tracking-[0.3em] text-amber-400 uppercase font-medium">
           TRANSPARENT INVESTMENT
         </div>
-        <h2 className="text-3xl sm:text-5xl font-bold font-display mt-4 leading-tight text-foreground">
-          Clear Pricing Models. Cinematic Execution.
+        <h2
+          className="mt-4 leading-tight text-foreground font-bold"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 'clamp(1.8rem, 4.5vw, 3.2rem)' }}
+        >
+          Clear Pricing Models.<br />
+          <em style={{ color: '#D4A853' }}>Cinematic</em> Execution.
         </h2>
-        <p className="text-muted-foreground font-light mt-4 text-base">
+        <p className="text-muted-foreground font-light mt-4 text-base max-w-xl mx-auto">
           All pricing options are clearly labeled as starting indicative quotes with zero surprise retainers.
         </p>
       </div>
@@ -182,9 +186,9 @@ const Pricing: React.FC = () => {
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
-            className={`px-4 py-2 rounded-full text-xs font-semibold transition-all ${selectedCategory === cat
-              ? 'bg-amber-400 text-black shadow-md shadow-amber-400/20'
-              : 'bg-foreground/5 dark:bg-white/5 border border-foreground/10 text-muted-foreground hover:text-foreground'
+            className={`px-4 py-2 rounded-full text-xs font-mono tracking-wider transition-all duration-300 ${selectedCategory === cat
+              ? 'bg-amber-400 text-black font-bold shadow-[0_0_18px_rgba(212,168,83,0.45)]'
+              : 'bg-white/[0.03] border border-white/10 text-zinc-400 hover:text-amber-300 hover:border-amber-400/30'
               }`}
           >
             {cat}
@@ -201,13 +205,14 @@ const Pricing: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-40px' }}
             transition={{ delay: idx * 0.08, duration: 0.6 }}
-            className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden transition-all duration-300 ${plan.recommended
-              ? 'bg-foreground/5 dark:bg-white/5 border-2 border-amber-400 shadow-[0_0_30px_rgba(251,191,36,0.15)] scale-[1.02]'
-              : 'liquid-glass border border-foreground/10'
-              }`}
+            className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden transition-all duration-300 group ${
+            plan.recommended
+              ? 'bg-[#0f1017] border-2 border-amber-400/60 shadow-[0_0_50px_rgba(212,168,83,0.18),0_0_100px_rgba(212,168,83,0.06)]'
+              : 'liquid-glass border border-white/[0.07] hover:border-amber-400/20'
+            }`}
           >
             {plan.recommended && (
-              <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-400 to-orange-500 text-black text-[10px] font-bold font-mono uppercase tracking-widest px-4 py-1 rounded-bl-xl shadow-md">
+              <div className="absolute top-0 right-0 bg-gradient-to-l from-amber-400 to-yellow-400 text-black text-[10px] font-bold font-mono uppercase tracking-widest px-4 py-1.5 rounded-bl-xl shadow-lg">
                 Recommended
               </div>
             )}
@@ -217,7 +222,10 @@ const Pricing: React.FC = () => {
                 {plan.idealFor}
               </div>
 
-              <h3 className="text-2xl font-bold text-foreground font-display mb-3">
+              <h3
+                className="text-xl font-bold text-foreground mb-3"
+                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+              >
                 {plan.name}
               </h3>
 
@@ -258,9 +266,10 @@ const Pricing: React.FC = () => {
 
             <button
               onClick={() => navigate('/contact')}
-              className={`w-full py-3.5 text-center rounded-2xl font-semibold text-xs transition-all cursor-pointer ${plan.recommended
-                ? 'bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 text-black hover:opacity-90 shadow-lg shadow-amber-500/20'
-                : 'bg-foreground text-background dark:bg-white dark:text-black hover:opacity-90'
+              className={`w-full py-3.5 text-center rounded-2xl font-semibold text-xs tracking-wider uppercase transition-all cursor-pointer ${
+                plan.recommended
+                  ? 'bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black hover:shadow-[0_0_25px_rgba(212,168,83,0.4)] hover:opacity-95'
+                  : 'bg-transparent border border-amber-400/30 text-amber-300 hover:bg-amber-400/10 hover:border-amber-400/60'
                 }`}
             >
               {plan.cta}

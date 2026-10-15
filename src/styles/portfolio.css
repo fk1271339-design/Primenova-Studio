@@ -32,9 +32,9 @@
   transition: all 0.4s ease;
 }
 
-/* Gradient shimmer text effect */
+/* Gradient shimmer text effect — gold-white classic */
 .text-gradient-shimmer {
-  background: linear-gradient(135deg, #ffffff 0%, #a78bfa 30%, #818cf8 50%, #60a5fa 70%, #ffffff 100%);
+  background: linear-gradient(135deg, #ffffff 0%, #F5D998 25%, #D4A853 50%, #F5D998 75%, #ffffff 100%);
   background-size: 200% auto;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -50,7 +50,7 @@
 /* Elegant thin line decoration */
 .hero-line-accent {
   height: 1px;
-  background: linear-gradient(to right, rgba(168,139,250,0.6) 0%, rgba(96,165,250,0.3) 50%, transparent 100%);
+  background: linear-gradient(to right, rgba(212,168,83,0.7) 0%, rgba(212,168,83,0.3) 50%, transparent 100%);
 }
 
 /* Warm Golden Spotlight Halo — cinematic ambient glow */

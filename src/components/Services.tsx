@@ -236,7 +236,7 @@ const Services: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-xs font-mono font-bold tracking-widest text-amber-400 uppercase"
+          className="text-[11px] font-mono tracking-[0.3em] text-amber-400 uppercase font-medium"
         >
           OUR FULL CAPABILITIES
         </motion.div>
@@ -246,11 +246,12 @@ const Services: React.FC = () => {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ delay: 0.1, duration: 0.5 }}
-          className="text-3xl sm:text-5xl font-bold font-display mt-4 leading-tight text-foreground"
+          className="mt-4 leading-tight text-foreground font-bold"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 'clamp(1.8rem, 4.5vw, 3.2rem)' }}
         >
-          12 Specialized Engineering & AI Services
+          12 Specialized Engineering &amp; <em style={{ color: '#D4A853', fontStyle: 'italic' }}>AI Services</em>
         </motion.h2>
-        <p className="text-muted-foreground font-light text-base mt-4">
+        <p className="text-muted-foreground font-light text-base mt-4 max-w-xl mx-auto">
           From full-stack web platforms and bespoke e-commerce engines to cognitive AI workflows and cloud infrastructure.
         </p>
       </div>

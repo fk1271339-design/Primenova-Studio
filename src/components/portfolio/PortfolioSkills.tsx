@@ -13,30 +13,29 @@ const PortfolioSkills: React.FC = () => {
     : portfolioData.skills.filter((s) => s.category === activeCategory);
 
   const getTechBadge = (name: string) => {
-    switch (name.toLowerCase()) {
-      case 'java':
-        return { short: 'JAVA', color: 'text-amber-400 border-amber-500/30 bg-amber-500/10' };
-      case 'spring boot':
-        return { short: 'BOOT', color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' };
-      case 'react':
-        return { short: 'REACT', color: 'text-sky-400 border-sky-500/30 bg-sky-500/10' };
-      case 'typescript':
-        return { short: 'TS', color: 'text-blue-400 border-blue-500/30 bg-blue-500/10' };
-      case 'javascript':
-        return { short: 'JS', color: 'text-yellow-400 border-yellow-500/30 bg-yellow-500/10' };
-      case 'tailwind css':
-        return { short: 'CSS', color: 'text-cyan-400 border-cyan-500/30 bg-cyan-500/10' };
-      case 'node.js':
-        return { short: 'NODE', color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' };
-      case 'mongodb':
-        return { short: 'MONGO', color: 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' };
-      case 'postgresql':
-        return { short: 'POSTGRES', color: 'text-indigo-400 border-indigo-500/30 bg-indigo-500/10' };
-      case 'docker':
-        return { short: 'DOCKER', color: 'text-sky-400 border-sky-500/30 bg-sky-500/10' };
-      default:
-        return { short: name.substring(0, 4).toUpperCase(), color: 'text-purple-400 border-purple-500/30 bg-purple-500/10' };
-    }
+    // Unified gold/amber badge for all — classic premium look
+    return {
+      short: (() => {
+        switch (name.toLowerCase()) {
+          case 'java': return 'JAVA';
+          case 'spring boot': return 'BOOT';
+          case 'react': return 'REACT';
+          case 'typescript': return 'TS';
+          case 'javascript': return 'JS';
+          case 'tailwind css': return 'CSS';
+          case 'node.js': return 'NODE';
+          case 'mongodb': return 'MONGO';
+          case 'postgresql': return 'PGSQL';
+          case 'docker': return 'DOCKER';
+          case 'mysql': return 'MYSQL';
+          case 'rest apis': return 'REST';
+          case 'html5': return 'HTML';
+          case 'css3': return 'CSS3';
+          default: return name.substring(0, 4).toUpperCase();
+        }
+      })(),
+      color: 'text-amber-400 border-amber-500/30 bg-amber-500/[0.08]',
+    };
   };
 
   const row1 = portfolioData.skills.slice(0, 8);
@@ -71,14 +70,14 @@ const PortfolioSkills: React.FC = () => {
       <div className="max-w-7xl mx-auto mb-12">
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <span className="font-mono text-3xl sm:text-4xl font-bold text-amber-500/30">03</span>
+          <div className="flex items-center gap-5">
+            <span className="font-classic italic text-4xl sm:text-5xl font-light text-amber-400/30">03</span>
             <div className="flex flex-col">
-              <span className="text-xs font-mono tracking-[0.25em] text-amber-400 uppercase font-semibold">
+              <span className="text-[11px] font-mono tracking-[0.3em] text-amber-400 uppercase font-medium">
                 MY SKILLS
               </span>
-              <h2 className="text-3xl sm:text-4xl md:text-5xl font-extrabold font-sans tracking-tight text-white mt-1">
-                Technologies I <span className="text-amber-400">work with</span>
+              <h2 className="font-classic text-3xl sm:text-4xl md:text-5xl font-bold text-white mt-1">
+                Technologies I <span className="italic text-amber-300">work with</span>
               </h2>
             </div>
           </div>
@@ -89,10 +88,10 @@ const PortfolioSkills: React.FC = () => {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`px-4 py-2 rounded-xl text-xs font-mono tracking-wider transition-all ${
+                className={`px-4 py-2 rounded-full text-xs font-mono tracking-wider transition-all duration-300 ${
                   activeCategory === cat
-                    ? 'bg-amber-500 text-black font-bold shadow-[0_0_15px_rgba(245,158,11,0.4)]'
-                    : 'bg-white/5 text-zinc-400 hover:text-white hover:bg-white/10 border border-white/10'
+                    ? 'bg-amber-400 text-black font-bold shadow-[0_0_15px_rgba(212,168,83,0.4)]'
+                    : 'bg-white/[0.03] text-zinc-400 hover:text-amber-300 hover:border-amber-400/30 border border-white/10'
                 }`}
               >
                 {cat}

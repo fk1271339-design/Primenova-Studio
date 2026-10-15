@@ -27,11 +27,14 @@ const About: React.FC = () => {
       {/* Story & Mission Statement */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start mb-20">
         <div className="lg:col-span-6 flex flex-col gap-6">
-          <div className="text-xs font-mono font-bold tracking-widest text-amber-400 uppercase">
+          <div className="text-[11px] font-mono tracking-[0.3em] text-amber-400 uppercase font-medium">
             ABOUT PRIMENOVA STUDIO
           </div>
-          <h2 className="text-3xl sm:text-5xl font-bold font-display leading-tight text-foreground">
-            A digital engineering & applied AI studio forging what comes next.
+          <h2
+            className="leading-tight text-foreground font-bold"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 'clamp(1.8rem, 4vw, 3rem)' }}
+          >
+            A digital engineering &amp; applied <em style={{ color: '#D4A853' }}>AI studio</em> forging what comes next.
           </h2>
           <p className="text-lg text-muted-foreground font-light leading-relaxed">
             PrimeNova Studio operates at the convergence of high-end editorial design, resilient backend architecture, and cognitive AI integration.
@@ -43,17 +46,25 @@ const About: React.FC = () => {
 
         {/* Mission & Vision Cards */}
         <div className="lg:col-span-6 flex flex-col gap-6">
-          <div className="p-8 rounded-3xl liquid-glass border border-amber-500/20">
-            <span className="text-xs font-mono font-bold text-amber-400 uppercase tracking-widest block mb-2">OUR MISSION</span>
-            <h3 className="text-xl font-bold font-display text-foreground mb-2">Architecting Digital Momentum</h3>
+          <div className="p-8 rounded-3xl liquid-glass border border-amber-400/25 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-amber-400/50 to-transparent" />
+            <span className="text-[11px] font-mono tracking-[0.3em] text-amber-400 uppercase font-medium block mb-3">OUR MISSION</span>
+            <h3
+              className="text-xl font-bold text-foreground mb-2"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >Architecting Digital Momentum</h3>
             <p className="text-sm text-muted-foreground font-light leading-relaxed">
               To empower modern businesses with state-of-the-art web platforms, scalable e-commerce infrastructure, and intelligent AI models that accelerate growth.
             </p>
           </div>
 
-          <div className="p-8 rounded-3xl liquid-glass border border-foreground/10">
-            <span className="text-xs font-mono font-bold text-indigo-400 uppercase tracking-widest block mb-2">OUR VISION</span>
-            <h3 className="text-xl font-bold font-display text-foreground mb-2">Craft Meets Intelligence</h3>
+          <div className="p-8 rounded-3xl liquid-glass border border-amber-400/15 relative overflow-hidden">
+            <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-amber-400/30 to-transparent" />
+            <span className="text-[11px] font-mono tracking-[0.3em] text-amber-400 uppercase font-medium block mb-3">OUR VISION</span>
+            <h3
+              className="text-xl font-bold text-foreground mb-2"
+              style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+            >Craft Meets Intelligence</h3>
             <p className="text-sm text-muted-foreground font-light leading-relaxed">
               A future where digital products are not just functional software, but cinematic experiences powered by invisible cognitive intelligence.
             </p>
@@ -64,8 +75,11 @@ const About: React.FC = () => {
       {/* 8-Step Engineering Lifecycle Timeline */}
       <div id="process" className="mb-20">
         <div className="text-center max-w-2xl mx-auto mb-12">
-          <span className="text-xs font-mono font-bold text-amber-400 uppercase tracking-widest">HOW WE WORK</span>
-          <h3 className="text-3xl font-bold font-display text-foreground mt-2">Our 8-Step Engineering Process</h3>
+          <span className="text-[11px] font-mono tracking-[0.3em] text-amber-400 uppercase font-medium">HOW WE WORK</span>
+          <h3
+            className="font-bold text-foreground mt-2"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 'clamp(1.5rem, 3.5vw, 2.2rem)' }}
+          >Our 8-Step <em style={{ color: '#D4A853' }}>Engineering Process</em></h3>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -89,10 +103,13 @@ const About: React.FC = () => {
       </div>
 
       {/* Supported Technology Stack Matrix */}
-      <div id="tech-stack" className="p-8 sm:p-12 rounded-3xl liquid-glass border border-foreground/10">
+      <div id="tech-stack" className="p-8 sm:p-12 rounded-3xl liquid-glass border border-amber-400/[0.1]">
         <div className="text-center max-w-2xl mx-auto mb-10">
-          <span className="text-xs font-mono font-bold text-amber-400 uppercase tracking-widest">TECHNOLOGY STACK</span>
-          <h3 className="text-3xl font-bold font-display text-foreground mt-2">Engineering Ecosystem</h3>
+          <span className="text-[11px] font-mono tracking-[0.3em] text-amber-400 uppercase font-medium">TECHNOLOGY STACK</span>
+          <h3
+            className="font-bold text-foreground mt-2"
+            style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 'clamp(1.5rem, 3vw, 2rem)' }}
+          ><em style={{ color: '#D4A853', fontStyle: 'italic' }}>Engineering</em> Ecosystem</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -10,12 +10,12 @@ interface PortfolioHeroProps {
 }
 
 const statCardsConfig = [
-  { label: 'Years Experience', num: 2, suffix: '+', accent: 'from-purple-500 via-indigo-500 to-blue-500' },
-  { label: 'Projects Delivered', num: 20, suffix: '+', accent: 'from-amber-500 via-orange-500 to-red-500' },
-  { label: 'Happy Clients', num: 10, suffix: '+', accent: 'from-cyan-400 via-teal-500 to-blue-600' },
-  { label: 'Dedication Rate', num: 100, suffix: '%', accent: 'from-rose-500 via-pink-500 to-purple-600' },
-  { label: 'Code Quality', num: 99, suffix: '%', accent: 'from-emerald-400 via-teal-400 to-green-500' },
-  { label: 'API Performance', num: 100, suffix: 'ms', accent: 'from-blue-500 via-sky-400 to-cyan-400' },
+  { label: 'Years Experience', num: 2, suffix: '+', accent: 'from-amber-400 via-yellow-500 to-amber-600' },
+  { label: 'Projects Delivered', num: 20, suffix: '+', accent: 'from-amber-500 via-orange-400 to-yellow-500' },
+  { label: 'Happy Clients', num: 10, suffix: '+', accent: 'from-yellow-400 via-amber-500 to-orange-500' },
+  { label: 'Dedication Rate', num: 100, suffix: '%', accent: 'from-amber-300 via-yellow-400 to-amber-500' },
+  { label: 'Code Quality', num: 99, suffix: '%', accent: 'from-orange-400 via-amber-400 to-yellow-400' },
+  { label: 'API Performance', num: 100, suffix: 'ms', accent: 'from-amber-600 via-amber-400 to-yellow-300' },
 ];
 
 /* ─── Floating particles canvas for cinematic depth ─── */
@@ -149,8 +149,8 @@ const PortfolioHero: React.FC<PortfolioHeroProps> = ({ onNavigate }) => {
         <div className="lg:col-span-7 flex flex-col justify-center">
           {/* Classic serif italic tagline */}
           <motion.div variants={fadeUp} className="mb-6 flex items-center gap-4">
-            <span className="h-px w-10 bg-gradient-to-r from-violet-400/60 to-transparent"></span>
-            <span className="font-classic italic text-sm sm:text-base tracking-wide text-zinc-300/80">
+            <span className="h-px w-10 bg-gradient-to-r from-amber-400/70 to-transparent"></span>
+            <span className="font-classic italic text-sm sm:text-base tracking-wide text-amber-300/80">
               Hello, I'm
             </span>
           </motion.div>
@@ -159,7 +159,7 @@ const PortfolioHero: React.FC<PortfolioHeroProps> = ({ onNavigate }) => {
           <motion.div variants={fadeUp} className="flex flex-col select-none">
             {/* First name with serif 'MD' prefix */}
             <div className="flex items-baseline gap-3 lg:gap-5">
-              <span className="font-classic italic text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-violet-300/70 font-light tracking-wide">
+              <span className="font-classic italic text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-amber-300/60 font-light tracking-wide">
                 Md
               </span>
               <span className="font-hero-display text-7xl sm:text-8xl md:text-9xl lg:text-[10rem] font-bold text-white uppercase tracking-tight leading-[0.88]">
@@ -186,8 +186,8 @@ const PortfolioHero: React.FC<PortfolioHeroProps> = ({ onNavigate }) => {
             variants={fadeUp}
             className="mt-5 max-w-lg text-[13px] sm:text-sm md:text-base text-zinc-400 font-light leading-relaxed tracking-wide"
           >
-            Building <span className="font-classic italic text-zinc-300">high-performance</span> digital architectures where precision meets
-            cinematic experience. Specialized in <span className="font-classic italic text-zinc-300">scalable systems</span> and interactive
+            Building <span className="font-classic italic text-amber-200/80">high-performance</span> digital architectures where precision meets
+            cinematic experience. Specialized in <span className="font-classic italic text-amber-200/80">scalable systems</span> and interactive
             engineering.
           </motion.p>
 
@@ -306,12 +306,12 @@ const PortfolioHero: React.FC<PortfolioHeroProps> = ({ onNavigate }) => {
           {[...statCardsConfig, ...statCardsConfig].map((stat, idx) => (
             <div
               key={idx}
-              className="relative min-w-[240px] sm:min-w-[280px] p-6 rounded-2xl bg-[#0f1017]/90 border border-white/[0.06] hover:border-white/20 transition-all duration-300 flex flex-col justify-between overflow-hidden shrink-0 group cursor-pointer"
+              className="relative min-w-[240px] sm:min-w-[280px] p-6 rounded-2xl bg-[#0f1017]/90 border border-white/[0.06] hover:border-amber-400/20 transition-all duration-300 flex flex-col justify-between overflow-hidden shrink-0 group cursor-pointer"
             >
               <div>
-                <div className="text-3xl sm:text-4xl font-extrabold font-display text-white group-hover:text-blue-400 transition-colors duration-300 flex items-center">
+                <div className="text-3xl sm:text-4xl font-extrabold font-display text-white group-hover:text-amber-400 transition-colors duration-300 flex items-center">
                   <AnimatedCounter value={stat.num} />
-                  <span className="text-blue-400 ml-1">{stat.suffix}</span>
+                  <span className="text-amber-400 ml-1">{stat.suffix}</span>
                 </div>
                 <span className="text-xs font-mono uppercase tracking-wider text-zinc-500 mt-2 block">
                   {stat.label}

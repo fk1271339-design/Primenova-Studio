@@ -6,6 +6,72 @@ import AnimatedCounter from './AnimatedCounter';
 
 const CYCLING_WORDS = ['Engineering.', 'Intelligence.', 'Momentum.', 'Innovation.'];
 
+/* ─── Floating particles for Home Hero ─── */
+const HomeParticles: React.FC = () => {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animId: number;
+    const particles: { x: number; y: number; r: number; vx: number; vy: number; o: number; gold: boolean }[] = [];
+
+    const resize = () => {
+      canvas.width = canvas.offsetWidth;
+      canvas.height = canvas.offsetHeight;
+    };
+    resize();
+    window.addEventListener('resize', resize);
+
+    for (let i = 0; i < 60; i++) {
+      particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
+        r: Math.random() * 1.5 + 0.3,
+        vx: (Math.random() - 0.5) * 0.25,
+        vy: (Math.random() - 0.5) * 0.25,
+        o: Math.random() * 0.4 + 0.05,
+        gold: Math.random() > 0.5,
+      });
+    }
+
+    const draw = () => {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p) => {
+        p.x += p.vx;
+        p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = p.gold
+          ? `rgba(212, 168, 83, ${p.o})`
+          : `rgba(255, 255, 255, ${p.o * 0.4})`;
+        ctx.fill();
+      });
+      animId = requestAnimationFrame(draw);
+    };
+    draw();
+
+    return () => {
+      cancelAnimationFrame(animId);
+      window.removeEventListener('resize', resize);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={canvasRef}
+      className="absolute inset-0 w-full h-full pointer-events-none z-0"
+    />
+  );
+};
+
 const Hero: React.FC = () => {
   const navigate = useNavigate();
   const [showreelOpen, setShowreelOpen] = useState(false);
@@ -21,10 +87,8 @@ const Hero: React.FC = () => {
 
   const mouseX = useMotionValue(0);
   const mouseY = useMotionValue(0);
-
   const springX = useSpring(mouseX, { damping: 30, stiffness: 200 });
   const springY = useSpring(mouseY, { damping: 30, stiffness: 200 });
-
   const displayX = useTransform(springX, (x) => x * 0.3);
   const displayY = useTransform(springY, (y) => y * 0.3);
 
@@ -38,12 +102,9 @@ const Hero: React.FC = () => {
       if (!containerRef.current) return;
       const { clientX, clientY } = e;
       const { innerWidth, innerHeight } = window;
-      const x = (clientX - innerWidth / 2) / 35;
-      const y = (clientY - innerHeight / 2) / 35;
-      mouseX.set(x);
-      mouseY.set(y);
+      mouseX.set((clientX - innerWidth / 2) / 35);
+      mouseY.set((clientY - innerHeight / 2) / 35);
     };
-
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [mouseX, mouseY]);
@@ -51,40 +112,57 @@ const Hero: React.FC = () => {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-[96vh] w-full flex flex-col items-center justify-center overflow-hidden pt-32 pb-20 px-4 md:px-8 border-b border-foreground/5"
+      className="relative min-h-[96vh] w-full flex flex-col items-center justify-center overflow-hidden pt-32 pb-20 px-4 md:px-8 border-b border-foreground/5 bg-[#08080a]"
     >
-      {/* Subtle Digital Grid & Glowing Orbs Background */}
+      {/* Floating particles */}
+      <HomeParticles />
+
+      {/* Ambient glows */}
       <motion.div
         style={{ y: yBg, opacity: opacityBg }}
         className="absolute inset-0 z-0 pointer-events-none"
       >
-        <div className="absolute top-1/3 left-1/3 -translate-x-1/2 -translate-y-1/2 w-[38vw] h-[38vw] rounded-full bg-gradient-to-tr from-amber-500/10 via-orange-500/5 to-rose-500/10 blur-[130px] animate-pulse duration-10000" />
-        <div className="absolute bottom-1/4 right-1/4 translate-x-1/2 translate-y-1/2 w-[42vw] h-[42vw] rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-500/5 blur-[150px]" />
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800d_1px,transparent_1px),linear-gradient(to_bottom,#8080800d_1px,transparent_1px)] bg-[size:36px_36px] [mask-image:radial-gradient(ellipse_65%_55%_at_50%_50%,#000_70%,transparent_100%)]" />
+        {/* Gold center glow */}
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[50vw] h-[50vw] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(212,168,83,0.12) 0%, rgba(212,168,83,0.04) 40%, transparent 70%)',
+            filter: 'blur(80px)',
+          }}
+        />
+        {/* Violet bottom-right accent */}
+        <div className="absolute bottom-1/4 right-1/4 w-[35vw] h-[35vw] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(139,92,246,0.08) 0%, transparent 70%)',
+            filter: 'blur(100px)',
+          }}
+        />
+        {/* Subtle grid */}
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(212,168,83,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(212,168,83,0.03)_1px,transparent_1px)] bg-[size:60px_60px] [mask-image:radial-gradient(ellipse_70%_60%_at_50%_50%,#000_70%,transparent_100%)]" />
       </motion.div>
 
-      {/* Main Interactive Hero Foreground Container */}
+      {/* Main content */}
       <motion.div
         style={{ scale: scaleContent, x: displayX, y: displayY }}
         className="relative z-10 max-w-5xl text-center flex flex-col items-center"
       >
-        {/* Glass Tag Badge */}
+        {/* Classic serif badge */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-foreground/5 dark:bg-white/5 border border-foreground/10 text-xs font-semibold tracking-widest text-amber-400 mb-8 backdrop-blur-md"
+          className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full border border-amber-400/25 bg-amber-400/[0.06] text-xs font-mono tracking-widest text-amber-400 mb-10 backdrop-blur-md"
         >
-          <SparklesIcon className="w-4 h-4 text-amber-400 animate-pulse" />
-          DIGITAL ENGINEERING & APPLIED AI STUDIO
+          <SparklesIcon className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+          DIGITAL ENGINEERING &amp; APPLIED AI STUDIO
         </motion.div>
 
-        {/* Editorial Animated Word Cycling Headline */}
+        {/* Main headline — classic serif + modern word cycle */}
         <motion.h1
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, ease: [0.2, 0.65, 0.3, 0.9] }}
-          className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-black font-display tracking-tight leading-[1.05] text-foreground"
+          transition={{ duration: 0.7, ease: [0.2, 0.65, 0.3, 0.9] as [number,number,number,number] }}
+          className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[1.02] text-white"
+          style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
           Design.{' '}
           <AnimatePresence mode="wait">
@@ -94,123 +172,156 @@ const Hero: React.FC = () => {
               animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
               exit={{ opacity: 0, y: -25, filter: 'blur(10px)' }}
               transition={{ duration: 0.5, ease: 'easeInOut' }}
-              className="inline-block bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 bg-clip-text text-transparent"
+              className="inline-block bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 bg-clip-text text-transparent"
             >
               {CYCLING_WORDS[wordIndex]}
             </motion.span>
           </AnimatePresence>
         </motion.h1>
 
-        {/* Supporting Paragraph */}
+        {/* Decorative gold rule */}
+        <motion.div
+          initial={{ opacity: 0, scaleX: 0 }}
+          animate={{ opacity: 1, scaleX: 1 }}
+          transition={{ delay: 0.4, duration: 0.8 }}
+          className="mt-6 w-32 h-px bg-gradient-to-r from-transparent via-amber-400/60 to-transparent"
+        />
+
+        {/* Subtitle with serif italic emphasis */}
         <motion.p
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.7 }}
-          className="mt-8 text-lg sm:text-xl text-muted-foreground max-w-2xl font-light leading-relaxed"
+          className="mt-6 text-base sm:text-lg md:text-xl text-zinc-400 max-w-2xl font-light leading-relaxed"
         >
-          PrimeNova Studio crafts cinematic digital platforms, high-converting e-commerce stores, and cognitive AI engines for visionary enterprises.
+          PrimeNova Studio crafts{' '}
+          <span style={{ fontFamily: "'Playfair Display', serif" }} className="italic text-zinc-200">
+            cinematic digital platforms
+          </span>
+          , high-converting e-commerce stores, and{' '}
+          <span style={{ fontFamily: "'Playfair Display', serif" }} className="italic text-zinc-200">
+            cognitive AI engines
+          </span>{' '}
+          for visionary enterprises.
         </motion.p>
 
-        {/* Action CTAs */}
+        {/* CTA Buttons */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.7 }}
           className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center"
         >
+          {/* Primary — Gold gradient */}
           <button
             onClick={() => navigate('/contact')}
-            className="group relative flex items-center gap-2.5 px-8 py-4 rounded-full bg-gradient-to-r from-amber-400 via-orange-400 to-rose-500 text-black font-bold text-base shadow-[0_8px_30px_rgba(245,158,11,0.3)] hover:scale-105 transition-all duration-300 active:scale-98"
+            className="group relative flex items-center gap-2.5 px-8 py-4 rounded-full bg-gradient-to-r from-amber-400 via-yellow-400 to-amber-500 text-black font-bold text-sm uppercase tracking-wider shadow-[0_8px_40px_rgba(212,168,83,0.35)] hover:shadow-[0_8px_50px_rgba(212,168,83,0.5)] hover:scale-105 transition-all duration-300"
           >
             Start a Project
-            <ArrowRightIcon className="w-5 h-5 transition-transform duration-300 group-hover:translate-x-1" />
+            <ArrowRightIcon className="w-4 h-4 transition-transform duration-300 group-hover:translate-x-1" />
           </button>
 
+          {/* Secondary — glass outline */}
           <button
             onClick={() => navigate('/portfolio')}
-            className="group flex items-center gap-2.5 px-8 py-4 rounded-full bg-foreground/5 dark:bg-white/5 border border-foreground/10 text-foreground font-semibold text-base transition-all duration-300 hover:bg-foreground/10 dark:hover:bg-white/10 hover:scale-105 backdrop-blur-md"
+            className="group flex items-center gap-2.5 px-8 py-4 rounded-full bg-white/[0.04] border border-white/10 text-white font-semibold text-sm uppercase tracking-wider transition-all duration-300 hover:bg-white/[0.08] hover:border-amber-400/30 hover:scale-105 backdrop-blur-md"
           >
             Explore Work
           </button>
 
+          {/* Showreel */}
           <button
             onClick={() => setShowreelOpen(true)}
-            className="group flex items-center gap-2 px-6 py-4 rounded-full text-muted-foreground hover:text-foreground text-sm font-semibold transition-colors"
+            className="group flex items-center gap-2 px-4 py-4 rounded-full text-zinc-400 hover:text-amber-300 text-sm font-semibold transition-colors duration-300"
           >
-            <span className="flex items-center justify-center w-7 h-7 rounded-full bg-foreground/10 dark:bg-white/10 text-foreground transition-transform group-hover:scale-110">
+            <span className="flex items-center justify-center w-8 h-8 rounded-full border border-white/10 bg-white/[0.04] group-hover:border-amber-400/30 group-hover:bg-amber-400/[0.06] text-white transition-all group-hover:scale-110">
               <PlayIcon className="w-3.5 h-3.5 ml-0.5" />
             </span>
             Showreel
           </button>
         </motion.div>
 
-        {/* Floating UI Cards */}
+        {/* Service Cards — unified gold accent numbers */}
         <motion.div
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.8 }}
-          className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-4xl text-left"
+          className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-4xl text-left"
         >
-          <div className="p-5 rounded-2xl liquid-glass border border-foreground/10 flex flex-col gap-2 hover:border-amber-400/30 transition-colors">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-amber-400 font-bold">01 / DIGITAL ENGINEERING</span>
-            <span className="text-sm font-bold text-foreground font-display">Full-Stack React & Spring Boot</span>
-            <span className="text-xs text-muted-foreground font-light leading-relaxed">High-speed modular web apps with secure REST APIs & OAuth.</span>
-          </div>
-
-          <div className="p-5 rounded-2xl liquid-glass border border-foreground/10 flex flex-col gap-2 hover:border-rose-400/30 transition-colors">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-rose-400 font-bold">02 / E-COMMERCE STORES</span>
-            <span className="text-sm font-bold text-foreground font-display">Custom Storefronts & Marketplaces</span>
-            <span className="text-xs text-muted-foreground font-light leading-relaxed">Scalable cart, checkout, inventory management & analytics.</span>
-          </div>
-
-          <div className="p-5 rounded-2xl liquid-glass border border-foreground/10 flex flex-col gap-2 hover:border-indigo-400/30 transition-colors">
-            <span className="text-[10px] font-mono uppercase tracking-widest text-indigo-400 font-bold">03 / APPLIED AI SOLUTIONS</span>
-            <span className="text-sm font-bold text-foreground font-display">Agentic Workflows & Chat</span>
-            <span className="text-xs text-muted-foreground font-light leading-relaxed">Embed cognitive assistants & intelligent automation in your product.</span>
-          </div>
+          {[
+            {
+              num: '01',
+              label: 'DIGITAL ENGINEERING',
+              title: 'Full-Stack React & Spring Boot',
+              desc: 'High-speed modular web apps with secure REST APIs & OAuth.',
+            },
+            {
+              num: '02',
+              label: 'E-COMMERCE STORES',
+              title: 'Custom Storefronts & Marketplaces',
+              desc: 'Scalable cart, checkout, inventory management & analytics.',
+            },
+            {
+              num: '03',
+              label: 'APPLIED AI SOLUTIONS',
+              title: 'Agentic Workflows & Chat',
+              desc: 'Embed cognitive assistants & intelligent automation in your product.',
+            },
+          ].map((card, i) => (
+            <motion.div
+              key={i}
+              whileHover={{ y: -4 }}
+              transition={{ duration: 0.2 }}
+              className="p-5 rounded-2xl bg-white/[0.03] backdrop-blur-md border border-white/[0.08] flex flex-col gap-3 hover:border-amber-400/25 hover:bg-amber-400/[0.03] transition-all duration-300 group cursor-pointer relative overflow-hidden"
+            >
+              {/* Top gold accent bar */}
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-amber-400/40 via-amber-400/20 to-transparent" />
+              <div className="flex items-center gap-2">
+                <span
+                  className="text-2xl font-light text-amber-400/50 group-hover:text-amber-400/80 transition-colors"
+                  style={{ fontFamily: "'Playfair Display', serif" }}
+                >
+                  {card.num}
+                </span>
+                <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-500 group-hover:text-amber-400/60 transition-colors">{card.label}</span>
+              </div>
+              <span className="text-sm font-bold text-white">{card.title}</span>
+              <span className="text-xs text-zinc-500 font-light leading-relaxed">{card.desc}</span>
+            </motion.div>
+          ))}
         </motion.div>
       </motion.div>
 
-      {/* Trust & Metrics Section */}
+      {/* Trust Metrics */}
       <motion.div
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.9, duration: 0.8 }}
-        className="relative z-10 w-full max-w-5xl mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 px-6 py-8 rounded-3xl liquid-glass border border-foreground/10"
+        className="relative z-10 w-full max-w-4xl mt-14 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.06] px-8 py-7 rounded-3xl bg-white/[0.02] border border-amber-400/[0.08] backdrop-blur-md"
       >
-        <div className="flex flex-col items-center text-center p-4">
-          <span className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight font-display">
-            <AnimatedCounter value={100} suffix="%" />
-          </span>
-          <span className="text-xs font-mono text-muted-foreground mt-2 uppercase tracking-widest">
-            Production Quality Guarantee
-          </span>
-        </div>
-        <div className="flex flex-col items-center text-center p-4 border-y sm:border-y-0 sm:border-x border-foreground/10">
-          <span className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight font-display">
-            <AnimatedCounter value={12} suffix="+" />
-          </span>
-          <span className="text-xs font-mono text-muted-foreground mt-2 uppercase tracking-widest">
-            Core Agency Services
-          </span>
-        </div>
-        <div className="flex flex-col items-center text-center p-4">
-          <span className="text-4xl md:text-5xl font-extrabold text-foreground tracking-tight font-display">
-            <AnimatedCounter value={24} suffix="/7" />
-          </span>
-          <span className="text-xs font-mono text-muted-foreground mt-2 uppercase tracking-widest">
-            Automated Support & AI Agents
-          </span>
-        </div>
+        {[
+          { value: 100, suffix: '%', label: 'Production Quality' },
+          { value: 12, suffix: '+', label: 'Core Agency Services' },
+          { value: 24, suffix: '/7', label: 'AI-Powered Support' },
+        ].map((metric, i) => (
+          <div key={i} className="flex flex-col items-center text-center p-4 group">
+            <span className="text-4xl md:text-5xl font-extrabold text-white group-hover:text-amber-400 transition-colors duration-300">
+              <AnimatedCounter value={metric.value} suffix={metric.suffix} />
+            </span>
+            <span className="text-[10px] font-mono text-zinc-500 mt-2 uppercase tracking-widest">
+              {metric.label}
+            </span>
+          </div>
+        ))}
       </motion.div>
 
-      {/* Showreel Lightbox Modal */}
+      {/* Showreel Modal */}
       {showreelOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-lg">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="relative w-full max-w-4xl aspect-video rounded-3xl overflow-hidden shadow-2xl border border-white/10"
+            className="relative w-full max-w-4xl aspect-video rounded-3xl overflow-hidden shadow-2xl border border-amber-400/20"
           >
             <button
               onClick={() => setShowreelOpen(false)}
