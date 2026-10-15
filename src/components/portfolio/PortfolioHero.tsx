@@ -149,18 +149,26 @@ const PortfolioHero: React.FC<PortfolioHeroProps> = ({ onNavigate }) => {
           transition={{ duration: 0.9, delay: 0.2 }}
           className="lg:col-span-5 relative flex justify-center items-end min-h-[480px] lg:min-h-[600px]"
         >
-          {/* Photo container with edge blending mask to prevent square crop lines */}
+          {/* Photo container with seamless edge blending into background */}
           <div
-            className="relative w-full max-w-lg h-full flex justify-center items-end"
+            className="relative w-full max-w-lg h-full flex justify-center items-end -mt-8"
             style={{
-              maskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%), linear-gradient(to bottom, black 85%, transparent 100%)',
-              WebkitMaskImage: 'linear-gradient(to right, transparent 0%, black 15%, black 85%, transparent 100%), linear-gradient(to bottom, black 85%, transparent 100%)',
+              maskImage: `
+                linear-gradient(to bottom, transparent 0%, black 8%, black 75%, transparent 100%),
+                linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)
+              `,
+              maskComposite: 'intersect',
+              WebkitMaskImage: `
+                linear-gradient(to bottom, transparent 0%, black 8%, black 75%, transparent 100%),
+                linear-gradient(to right, transparent 0%, black 12%, black 88%, transparent 100%)
+              `,
+              WebkitMaskComposite: 'source-in',
             }}
           >
             <img
-              src="/assets/faiz-hero.png"
+              src="/assets/faiz-hero-2.png"
               alt="Faiz — Software Engineer"
-              className="w-full h-auto max-h-[620px] object-contain object-bottom filter contrast-[1.05] brightness-100 drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
+              className="w-full h-auto max-h-[650px] object-contain object-bottom filter contrast-[1.05] brightness-100 drop-shadow-[0_20px_50px_rgba(0,0,0,0.8)]"
             />
           </div>
 
