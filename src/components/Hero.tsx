@@ -112,7 +112,7 @@ const Hero: React.FC = () => {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-[96vh] w-full flex flex-col items-center justify-center overflow-hidden pt-32 pb-20 px-4 md:px-8 border-b border-foreground/5 bg-[#08080a]"
+      className="relative min-h-[96vh] w-full flex flex-col items-center justify-center overflow-hidden pt-28 sm:pt-32 pb-12 sm:pb-20 px-4 md:px-8 border-b border-foreground/5 bg-[#08080a]"
     >
       {/* Floating particles */}
       <HomeParticles />
@@ -161,7 +161,7 @@ const Hero: React.FC = () => {
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7, ease: [0.2, 0.65, 0.3, 0.9] as [number,number,number,number] }}
-          className="text-5xl sm:text-7xl md:text-8xl font-black tracking-tight leading-[1.02] text-white"
+          className="text-4xl xs:text-5xl sm:text-6xl md:text-8xl font-black tracking-tight leading-[1.02] text-white"
           style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
         >
           Design.{' '}
@@ -210,7 +210,7 @@ const Hero: React.FC = () => {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5, duration: 0.7 }}
-          className="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center"
+          className="mt-8 sm:mt-10 flex flex-wrap gap-3 sm:gap-4 justify-center items-center"
         >
           {/* Primary — Gold gradient */}
           <button
@@ -246,7 +246,7 @@ const Hero: React.FC = () => {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7, duration: 0.8 }}
-          className="mt-14 grid grid-cols-1 sm:grid-cols-3 gap-4 w-full max-w-4xl text-left"
+          className="mt-8 sm:mt-14 grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 w-full max-w-4xl text-left"
         >
           {[
             {
@@ -297,18 +297,18 @@ const Hero: React.FC = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.9, duration: 0.8 }}
-        className="relative z-10 w-full max-w-4xl mt-14 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-white/[0.06] px-8 py-7 rounded-3xl bg-white/[0.02] border border-amber-400/[0.08] backdrop-blur-md"
+        className="relative z-10 w-full max-w-4xl mt-10 sm:mt-14 grid grid-cols-3 divide-x divide-white/[0.06] px-4 sm:px-8 py-5 sm:py-7 rounded-2xl sm:rounded-3xl bg-white/[0.02] border border-amber-400/[0.08] backdrop-blur-md"
       >
         {[
           { value: 100, suffix: '%', label: 'Production Quality' },
           { value: 12, suffix: '+', label: 'Core Agency Services' },
           { value: 24, suffix: '/7', label: 'AI-Powered Support' },
         ].map((metric, i) => (
-          <div key={i} className="flex flex-col items-center text-center p-4 group">
-            <span className="text-4xl md:text-5xl font-extrabold text-white group-hover:text-amber-400 transition-colors duration-300">
+          <div key={i} className="flex flex-col items-center text-center p-2 sm:p-4 group">
+            <span className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white group-hover:text-amber-400 transition-colors duration-300">
               <AnimatedCounter value={metric.value} suffix={metric.suffix} />
             </span>
-            <span className="text-[10px] font-mono text-zinc-500 mt-2 uppercase tracking-widest">
+            <span className="text-[9px] sm:text-[10px] font-mono text-zinc-500 mt-1 sm:mt-2 uppercase tracking-widest">
               {metric.label}
             </span>
           </div>

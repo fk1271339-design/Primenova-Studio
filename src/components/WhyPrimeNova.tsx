@@ -79,7 +79,7 @@ const reasons = [
 
 const WhyPrimeNova: React.FC = () => {
   return (
-    <section id="why-us" className="relative w-full max-w-6xl py-24 px-4 md:px-8 border-b border-foreground/5">
+    <section id="why-us" className="relative w-full max-w-6xl py-16 sm:py-24 px-4 md:px-8 border-b border-foreground/5">
       <div className="text-center max-w-3xl mx-auto mb-16">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
@@ -105,7 +105,7 @@ const WhyPrimeNova: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {reasons.map((item, idx) => (
           <motion.div
             key={item.title}
@@ -114,10 +114,10 @@ const WhyPrimeNova: React.FC = () => {
             viewport={{ once: true, margin: '-40px' }}
             transition={{ delay: idx * 0.08, duration: 0.6 }}
             whileHover={{ y: -6 }}
-            className="p-6 rounded-3xl liquid-glass border border-foreground/10 flex flex-col justify-between group hover:border-amber-400/30 transition-all duration-300"
+            className="p-5 sm:p-6 rounded-2xl sm:rounded-3xl liquid-glass border border-foreground/10 flex flex-col justify-between group hover:border-amber-400/30 transition-all duration-300"
           >
             <div>
-              <div className="w-12 h-12 rounded-2xl bg-foreground/5 dark:bg-white/5 border border-foreground/10 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
+              <div className="w-9 h-9 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-foreground/5 dark:bg-white/5 border border-foreground/10 flex items-center justify-center mb-4 sm:mb-6 group-hover:scale-110 transition-transform">
                 {item.icon}
               </div>
 

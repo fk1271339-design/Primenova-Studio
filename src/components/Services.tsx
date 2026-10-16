@@ -171,7 +171,7 @@ const ServiceCard: React.FC<{ service: ServiceItem }> = ({ service }) => {
       onMouseLeave={handleMouseLeave}
       style={{ rotateX, rotateY, transformStyle: 'preserve-3d' }}
       whileHover={{ y: -8 }}
-      className="relative flex flex-col justify-between p-8 rounded-3xl liquid-glass border border-foreground/10 group cursor-pointer transition-all duration-300 overflow-hidden min-h-[380px]"
+      className="relative flex flex-col justify-between p-5 sm:p-8 rounded-2xl sm:rounded-3xl liquid-glass border border-foreground/10 group cursor-pointer transition-all duration-300 overflow-hidden min-h-fit sm:min-h-[380px]"
     >
       <div className={`absolute inset-0 bg-gradient-to-br ${service.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 blur-xl pointer-events-none -z-10`} />
 
@@ -229,7 +229,7 @@ const ServiceCard: React.FC<{ service: ServiceItem }> = ({ service }) => {
 
 const Services: React.FC = () => {
   return (
-    <section id="services" className="relative w-full max-w-6xl py-24 px-4 md:px-8 border-b border-foreground/5">
+    <section id="services" className="relative w-full max-w-6xl py-16 sm:py-24 px-4 md:px-8 border-b border-foreground/5">
       <div className="text-center max-w-3xl mx-auto mb-16">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
@@ -257,7 +257,7 @@ const Services: React.FC = () => {
       </div>
 
       {/* Grid of 12 Services */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 [perspective:1000px]">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 [perspective:1000px]">
         {servicesData.map((service, index) => (
           <motion.div
             key={service.id}
@@ -277,7 +277,7 @@ const Services: React.FC = () => {
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ duration: 0.7 }}
-        className="mt-20 p-8 sm:p-12 rounded-3xl liquid-glass border border-amber-500/20 relative overflow-hidden"
+        className="mt-10 sm:mt-20 p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl liquid-glass border border-amber-500/20 relative overflow-hidden"
       >
         <div className="flex flex-col lg:flex-row gap-8 items-start justify-between">
           <div className="max-w-xl">
@@ -303,7 +303,7 @@ const Services: React.FC = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 w-full lg:max-w-md">
+          <div className="grid grid-cols-2 gap-3 w-full lg:max-w-md">
             {[
               { label: 'Product Catalog', icon: '📦' },
               { label: 'Cart & Smooth Checkout', icon: '🛒' },

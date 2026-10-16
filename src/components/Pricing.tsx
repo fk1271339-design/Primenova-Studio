@@ -163,7 +163,7 @@ const Pricing: React.FC = () => {
     : pricingPlansData.filter((p) => p.category === selectedCategory);
 
   return (
-    <section id="pricing" className="relative w-full max-w-6xl py-24 px-4 md:px-8 border-b border-foreground/5">
+    <section id="pricing" className="relative w-full max-w-6xl py-16 sm:py-24 px-4 md:px-8 border-b border-foreground/5">
       <div className="text-center max-w-3xl mx-auto mb-12">
         <div className="text-[11px] font-mono tracking-[0.3em] text-amber-400 uppercase font-medium">
           TRANSPARENT INVESTMENT
@@ -181,7 +181,7 @@ const Pricing: React.FC = () => {
       </div>
 
       {/* Category Filter Tabs */}
-      <div className="flex flex-wrap items-center justify-center gap-2 mb-12">
+      <div className="flex items-center gap-2 mb-8 sm:mb-12 overflow-x-auto pb-2 scrollbar-hide justify-start sm:justify-center -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
         {categories.map((cat) => (
           <button
             key={cat}
@@ -197,7 +197,7 @@ const Pricing: React.FC = () => {
       </div>
 
       {/* Pricing Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 items-stretch">
         {filteredPlans.map((plan, idx) => (
           <motion.div
             key={plan.name}
@@ -205,7 +205,7 @@ const Pricing: React.FC = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: '-40px' }}
             transition={{ delay: idx * 0.08, duration: 0.6 }}
-            className={`relative rounded-3xl p-8 flex flex-col justify-between overflow-hidden transition-all duration-300 group ${
+            className={`relative rounded-2xl sm:rounded-3xl p-5 sm:p-8 flex flex-col justify-between overflow-hidden transition-all duration-300 group ${
             plan.recommended
               ? 'bg-[#0f1017] border-2 border-amber-400/60 shadow-[0_0_50px_rgba(212,168,83,0.18),0_0_100px_rgba(212,168,83,0.06)]'
               : 'liquid-glass border border-white/[0.07] hover:border-amber-400/20'

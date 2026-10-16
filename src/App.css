@@ -294,6 +294,60 @@ footer a:hover::after {
     word-break: break-word;
     hyphens: auto;
   }
+
+  /* Services page – 2-col grid on tablet, 1-col on phone */
+  #services .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+    gap: 0.875rem !important;
+  }
+
+  /* About process steps – 2-col on tablet */
+  #about .grid.grid-cols-1.sm\:grid-cols-2.lg\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+
+  /* About tech stack – 1-col on mobile */
+  #about #tech-stack .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+
+  /* WhyPrimeNova – 2-col on tablet, 1-col on phone */
+  #why-us .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4 {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.75rem !important;
+  }
+
+  /* Pricing grid – 1-col */
+  #pricing .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+    gap: 0.875rem !important;
+  }
+
+  /* Hero service cards – 1 col */
+  .mt-14.grid.grid-cols-1.sm\:grid-cols-3 {
+    grid-template-columns: 1fr !important;
+    gap: 0.75rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* WhyPrimeNova – 1-col on phone */
+  #why-us .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* About process – 1-col on very small screens */
+  #about .grid.grid-cols-1.sm\:grid-cols-2.lg\:grid-cols-4 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* Footer grid – 1-col */
+  footer .max-w-6xl.mx-auto.grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-5 {
+    grid-template-columns: 1fr !important;
+    gap: 1.5rem !important;
+  }
 }
 
 /* Reduce motion for accessibility */

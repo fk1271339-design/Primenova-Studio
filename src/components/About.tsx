@@ -23,7 +23,7 @@ const techStack = [
 
 const About: React.FC = () => {
   return (
-    <section id="about" className="relative w-full max-w-6xl py-24 px-4 md:px-8 border-b border-foreground/5">
+    <section id="about" className="relative w-full max-w-6xl py-16 sm:py-24 px-4 md:px-8 border-b border-foreground/5">
       {/* Story & Mission Statement */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start mb-20">
         <div className="lg:col-span-6 flex flex-col gap-6">
@@ -46,7 +46,7 @@ const About: React.FC = () => {
 
         {/* Mission & Vision Cards */}
         <div className="lg:col-span-6 flex flex-col gap-6">
-          <div className="p-8 rounded-3xl liquid-glass border border-amber-400/25 relative overflow-hidden">
+          <div className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl liquid-glass border border-amber-400/25 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-amber-400/50 to-transparent" />
             <span className="text-[11px] font-mono tracking-[0.3em] text-amber-400 uppercase font-medium block mb-3">OUR MISSION</span>
             <h3
@@ -58,7 +58,7 @@ const About: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-8 rounded-3xl liquid-glass border border-amber-400/15 relative overflow-hidden">
+          <div className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl liquid-glass border border-amber-400/15 relative overflow-hidden">
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-amber-400/30 to-transparent" />
             <span className="text-[11px] font-mono tracking-[0.3em] text-amber-400 uppercase font-medium block mb-3">OUR VISION</span>
             <h3
@@ -82,7 +82,7 @@ const About: React.FC = () => {
           >Our 8-Step <em style={{ color: '#D4A853' }}>Engineering Process</em></h3>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {processSteps.map((step, idx) => (
             <motion.div
               key={step.num}
@@ -90,7 +90,7 @@ const About: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: idx * 0.05, duration: 0.5 }}
-              className="p-6 rounded-2xl liquid-glass border border-foreground/10 flex flex-col gap-3 group hover:border-amber-400/30 transition-all"
+              className="p-4 sm:p-6 rounded-xl sm:rounded-2xl liquid-glass border border-foreground/10 flex flex-col gap-2 sm:gap-3 group hover:border-amber-400/30 transition-all"
             >
               <span className="text-xl font-mono font-bold text-amber-400 group-hover:scale-110 transition-transform">
                 {step.num}
@@ -103,7 +103,7 @@ const About: React.FC = () => {
       </div>
 
       {/* Supported Technology Stack Matrix */}
-      <div id="tech-stack" className="p-8 sm:p-12 rounded-3xl liquid-glass border border-amber-400/[0.1]">
+      <div id="tech-stack" className="p-5 sm:p-8 md:p-12 rounded-2xl sm:rounded-3xl liquid-glass border border-amber-400/[0.1]">
         <div className="text-center max-w-2xl mx-auto mb-10">
           <span className="text-[11px] font-mono tracking-[0.3em] text-amber-400 uppercase font-medium">TECHNOLOGY STACK</span>
           <h3
