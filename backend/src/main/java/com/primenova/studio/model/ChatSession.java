@@ -5,6 +5,8 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 @Document(collection = "chat_history")
 public class ChatSession {
@@ -15,6 +17,22 @@ public class ChatSession {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private List<MessageItem> messages = new ArrayList<>();
+
+    // ─── Nova AI Memory Snapshot ──────────────────────────────
+    // Persists the AI's conversation context so it can be restored
+    // on next session load (user doesn't have to repeat themselves)
+    private String novaUserName;
+    private String novaProjectType;
+    private String novaIndustry;
+    private String novaBudget;
+    private String novaTimeline;
+    private String novaProductType;
+    private String novaPreferredTech;
+    private List<String> novaExtractedFeatures = new ArrayList<>();
+    private List<String> novaDiscussedServices = new ArrayList<>();
+    private String novaConversationStage;
+    private String novaPreferredLanguage;
+    private Map<String, String> novaDecisions = new HashMap<>();
 
     public static class MessageItem {
         private String sender; // "user" or "ai"
@@ -67,4 +85,41 @@ public class ChatSession {
 
     public List<MessageItem> getMessages() { return messages; }
     public void setMessages(List<MessageItem> messages) { this.messages = messages; }
+
+    // ─── Nova Memory Getters & Setters ───────────────────────
+    public String getNovaUserName() { return novaUserName; }
+    public void setNovaUserName(String novaUserName) { this.novaUserName = novaUserName; }
+
+    public String getNovaProjectType() { return novaProjectType; }
+    public void setNovaProjectType(String novaProjectType) { this.novaProjectType = novaProjectType; }
+
+    public String getNovaIndustry() { return novaIndustry; }
+    public void setNovaIndustry(String novaIndustry) { this.novaIndustry = novaIndustry; }
+
+    public String getNovaBudget() { return novaBudget; }
+    public void setNovaBudget(String novaBudget) { this.novaBudget = novaBudget; }
+
+    public String getNovaTimeline() { return novaTimeline; }
+    public void setNovaTimeline(String novaTimeline) { this.novaTimeline = novaTimeline; }
+
+    public String getNovaProductType() { return novaProductType; }
+    public void setNovaProductType(String novaProductType) { this.novaProductType = novaProductType; }
+
+    public String getNovaPreferredTech() { return novaPreferredTech; }
+    public void setNovaPreferredTech(String novaPreferredTech) { this.novaPreferredTech = novaPreferredTech; }
+
+    public List<String> getNovaExtractedFeatures() { return novaExtractedFeatures; }
+    public void setNovaExtractedFeatures(List<String> novaExtractedFeatures) { this.novaExtractedFeatures = novaExtractedFeatures; }
+
+    public List<String> getNovaDiscussedServices() { return novaDiscussedServices; }
+    public void setNovaDiscussedServices(List<String> novaDiscussedServices) { this.novaDiscussedServices = novaDiscussedServices; }
+
+    public String getNovaConversationStage() { return novaConversationStage; }
+    public void setNovaConversationStage(String novaConversationStage) { this.novaConversationStage = novaConversationStage; }
+
+    public String getNovaPreferredLanguage() { return novaPreferredLanguage; }
+    public void setNovaPreferredLanguage(String novaPreferredLanguage) { this.novaPreferredLanguage = novaPreferredLanguage; }
+
+    public Map<String, String> getNovaDecisions() { return novaDecisions; }
+    public void setNovaDecisions(Map<String, String> novaDecisions) { this.novaDecisions = novaDecisions; }
 }

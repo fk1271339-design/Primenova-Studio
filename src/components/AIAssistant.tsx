@@ -7,6 +7,18 @@ import {
   clearMemory,
   type NovaMemory,
 } from '../utils/novaEngine';
+import {
+  streamGemini,
+  generateSmartChips,
+  isGeminiEnabled,
+} from '../utils/geminiService';
+import {
+  scheduleSaveMemory,
+  saveMessageToBackend,
+  restoreMemoryFromBackend,
+  startNewBackendSession,
+  ensureActiveSession,
+} from '../utils/chatPersistenceService';
 
 // ─── FRAMER MOTION IMPORTS ────────────────────────────────────
 import { motion as m, AnimatePresence as AP } from 'framer-motion';
@@ -196,12 +208,19 @@ const Particles = () => {
 
 // ─── DYNAMIC THINKING INDICATOR ──────────────────────────────
 
-const ThinkingIndicator = () => {
-  const thoughts = [
+const ThinkingIndicator = ({ useGemini }: { useGemini?: boolean }) => {
+  const geminiThoughts = [
+    "Gemini is thinking...",
+    "Crafting the perfect reply...",
+    "Processing with AI...",
+    "Generating response...",
+  ];
+  const novaThoughts = [
     "Novee is thinking...",
     "Understanding your request...",
     "Preparing response...",
   ];
+  const thoughts = useGemini ? geminiThoughts : novaThoughts;
   const [index, setIndex] = useState(0);
 
   useEffect(() => {
@@ -209,7 +228,8 @@ const ThinkingIndicator = () => {
       setIndex((prev) => (prev + 1) % thoughts.length);
     }, 900);
     return () => clearInterval(interval);
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [useGemini]);
 
   return (
     <div className="flex items-center gap-2">
@@ -221,6 +241,11 @@ const ThinkingIndicator = () => {
       <span className="text-xs text-slate-400 font-medium transition-all duration-300">
         {thoughts[index]}
       </span>
+      {useGemini && (
+        <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-300 font-semibold border border-violet-500/20">
+          Gemini
+        </span>
+      )}
     </div>
   );
 };
@@ -242,10 +267,12 @@ const AIAssistant: React.FC = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isThinking, setIsThinking] = useState(false);
+  const [usingGemini, setUsingGemini] = useState(false);
   const [suggestionChips, setSuggestionChips] = useState<string[]>(getInitialChips(memory));
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const geminiEnabled = isGeminiEnabled();
 
   const isWelcomeState = messages.length === 0;
 
@@ -261,6 +288,18 @@ const AIAssistant: React.FC = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isThinking, scrollToBottom]);
+
+  // ── Restore memory from backend on mount (logged-in users) ──
+  useEffect(() => {
+    void restoreMemoryFromBackend().then(restored => {
+      if (restored) {
+        setLocalMemory(getMemory());
+      }
+    });
+    // Ensure backend session exists for message saving
+    void ensureActiveSession();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Auto-resize textarea ──
   const resizeTextarea = useCallback(() => {
@@ -303,7 +342,7 @@ const AIAssistant: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // ── Send message handler ──
+  // ── Send message handler (Gemini + Nova hybrid) ──
   const handleSendMessage = useCallback((text: string) => {
     if (!text.trim() || isThinking) return;
 
@@ -319,49 +358,126 @@ const AIAssistant: React.FC = () => {
     setMessages(prev => [...prev, userMsg]);
     setInputValue('');
     setIsThinking(true);
+    setUsingGemini(geminiEnabled);
 
     // Reset textarea height
     if (inputRef.current) {
       inputRef.current.style.height = 'auto';
     }
 
-    const thinkTime = 800 + Math.random() * 600; // 0.8–1.4s
+    const currentMemory = getMemory();
+    const simpleHistory = [...messages, userMsg].map((m) => ({ sender: m.sender, text: m.text }));
 
-    setTimeout(() => {
-      const currentMemory = getMemory();
-      const simpleHistory = [...messages, userMsg].map((m) => ({ sender: m.sender, text: m.text }));
+    // ── Save user message to backend ──
+    void saveMessageToBackend('user', text.trim());
 
-      let response;
-      try {
-        response = generateResponse(text, currentMemory, simpleHistory);
-      } catch {
-        response = {
-          text: "Sorry, I couldn't process that right now. Please try again.",
-          followUpQuestions: [],
-          suggestionChips: getInitialChips(currentMemory),
-          intent: 'error',
-        };
-      }
+    // ── Always run Nova Engine for memory/context extraction ──
+    let novaResponse;
+    try {
+      novaResponse = generateResponse(text, currentMemory, simpleHistory);
+    } catch {
+      novaResponse = {
+        text: "Sorry, I couldn't process that right now. Please try again.",
+        followUpQuestions: [],
+        suggestionChips: getInitialChips(currentMemory),
+        intent: 'error',
+      };
+    }
+    const updatedMemory = getMemory();
+    setLocalMemory(updatedMemory);
+    // Schedule memory save to backend (debounced)
+    scheduleSaveMemory(updatedMemory);
 
-      setLocalMemory(getMemory());
-
+    if (geminiEnabled) {
+      // ── Gemini streaming path ──
       const aiMsgId = genId();
       const aiMsg: Message = {
         id: aiMsgId,
         sender: 'ai',
-        text: response.text,
+        text: '',
         displayText: '',
         timestamp: new Date(),
         isStreaming: true,
       };
 
-      setMessages(prev => [...prev, aiMsg]);
-      setIsThinking(false);
-      setSuggestionChips(response.suggestionChips);
+      // Small delay so the thinking indicator shows
+      setTimeout(() => {
+        setMessages(prev => [...prev, aiMsg]);
+        setIsThinking(false);
 
-      streamText(response.text, aiMsgId);
-    }, thinkTime);
-  }, [isThinking, messages, streamText]);
+        let accumulated = '';
+
+        streamGemini(
+          text,
+          updatedMemory,
+          simpleHistory,
+          // onChunk — real-time token streaming
+          (chunk) => {
+            accumulated += chunk;
+            setMessages(prev =>
+              prev.map(m =>
+                m.id === aiMsgId
+                  ? { ...m, text: accumulated, displayText: accumulated }
+                  : m
+              )
+            );
+          },
+          // onDone
+          (fullText) => {
+            setMessages(prev =>
+              prev.map(m =>
+                m.id === aiMsgId
+                  ? { ...m, text: fullText, displayText: fullText, isStreaming: false }
+                  : m
+              )
+            );
+            setUsingGemini(false);
+            // Generate smart chips with Gemini
+            generateSmartChips(updatedMemory, fullText)
+              .then(chips => {
+                if (chips.length > 0) setSuggestionChips(chips);
+                else setSuggestionChips(novaResponse.suggestionChips);
+              })
+              .catch(() => setSuggestionChips(novaResponse.suggestionChips));
+            // Save AI response to backend
+            void saveMessageToBackend('ai', fullText);
+          },
+          // onError — fallback to Nova Engine response
+          (_err) => {
+            setUsingGemini(false);
+            setMessages(prev =>
+              prev.map(m =>
+                m.id === aiMsgId
+                  ? { ...m, text: novaResponse.text, displayText: '', isStreaming: true }
+                  : m
+              )
+            );
+            setSuggestionChips(novaResponse.suggestionChips);
+            streamText(novaResponse.text, aiMsgId);
+          }
+        );
+      }, 600);
+    } else {
+      // ── Nova Engine only path (no API key) ──
+      const thinkTime = 800 + Math.random() * 600;
+      setTimeout(() => {
+        const aiMsgId = genId();
+        const aiMsg: Message = {
+          id: aiMsgId,
+          sender: 'ai',
+          text: novaResponse.text,
+          displayText: '',
+          timestamp: new Date(),
+          isStreaming: true,
+        };
+        setMessages(prev => [...prev, aiMsg]);
+        setIsThinking(false);
+        setUsingGemini(false);
+        setSuggestionChips(novaResponse.suggestionChips);
+        streamText(novaResponse.text, aiMsgId);
+      }, thinkTime);
+    }
+  }, [isThinking, messages, streamText, geminiEnabled]);
 
   // ── Copy message ──
   const handleCopy = useCallback((msgId: string, text: string) => {
@@ -405,6 +521,8 @@ const AIAssistant: React.FC = () => {
     setSuggestionChips(getInitialChips(freshMemory));
     setInputValue('');
     setIsThinking(false);
+    // Create a new backend session
+    void startNewBackendSession();
   }, []);
 
   // ── Keyboard: Shift+Enter → newline, Enter → send ──
@@ -414,6 +532,59 @@ const AIAssistant: React.FC = () => {
       handleSendMessage(inputValue);
     }
   }, [inputValue, handleSendMessage]);
+
+  // ── Voice Input (Web Speech API) ──
+  const [isListening, setIsListening] = useState(false);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const voiceSupported = typeof window !== 'undefined' &&
+    ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
+
+  const handleVoiceToggle = useCallback(() => {
+    if (!voiceSupported) return;
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      setIsListening(false);
+      return;
+    }
+
+    const SpeechRecognitionAPI =
+      (window as Window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition ||
+      (window as Window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionAPI) return;
+
+    const recognition = new SpeechRecognitionAPI();
+    recognition.lang = memory.preferredLanguage === 'hindi' ? 'hi-IN' : 'hi-IN,en-IN';
+    recognition.interimResults = true;
+    recognition.continuous = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onstart = () => setIsListening(true);
+
+    recognition.onresult = (event: SpeechRecognitionEvent) => {
+      const transcript = Array.from(event.results)
+        .map(r => r[0].transcript)
+        .join('');
+      setInputValue(transcript);
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      // Auto-send if we got a non-empty transcript
+      setInputValue(prev => {
+        if (prev.trim()) {
+          setTimeout(() => handleSendMessage(prev.trim()), 100);
+        }
+        return prev;
+      });
+    };
+
+    recognition.onerror = () => setIsListening(false);
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  }, [isListening, voiceSupported, memory.preferredLanguage, handleSendMessage]);
 
   return (
     <section className="relative w-full min-h-screen py-0 px-4 md:px-8 flex flex-col items-center select-none pt-[110px]">
@@ -509,7 +680,7 @@ const AIAssistant: React.FC = () => {
                 <div className="font-semibold text-white text-sm flex items-center gap-1.5">
                   Novee
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-violet-500/10 text-violet-400 font-bold border border-violet-500/20">
-                    V2
+                    {geminiEnabled ? 'Gemini' : 'V2'}
                   </span>
                 </div>
                 <div className="text-[11px] text-slate-400 flex items-center gap-2 mt-0.5">
@@ -693,7 +864,7 @@ const AIAssistant: React.FC = () => {
                   N
                 </div>
                 <div className="px-4 py-3 rounded-2xl rounded-tl-md bg-white/[0.03] border border-white/5">
-                  <ThinkingIndicator />
+                  <ThinkingIndicator useGemini={usingGemini} />
                 </div>
               </m.div>
             )}
@@ -741,6 +912,34 @@ const AIAssistant: React.FC = () => {
                 className="flex-1 px-3 py-2 bg-transparent text-white placeholder:text-slate-500 text-sm focus:outline-none disabled:opacity-60 resize-none max-h-[120px] leading-relaxed"
               />
 
+              {/* Voice button */}
+              {voiceSupported && (
+                <button
+                  type="button"
+                  onClick={handleVoiceToggle}
+                  disabled={isThinking}
+                  title={isListening ? 'Stop listening' : 'Speak to Novee'}
+                  className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 active:scale-95 disabled:opacity-40 shrink-0 self-end ${
+                    isListening
+                      ? 'bg-rose-500/20 border border-rose-500/40 text-rose-400 animate-pulse'
+                      : 'bg-white/[0.03] border border-white/10 text-slate-400 hover:text-white hover:bg-white/[0.07]'
+                  }`}
+                >
+                  {isListening ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                      <rect x="6" y="6" width="12" height="12" rx="2" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                      <line x1="12" y1="19" x2="12" y2="23" />
+                      <line x1="8" y1="23" x2="16" y2="23" />
+                    </svg>
+                  )}
+                </button>
+              )}
+
               {/* Send button */}
               <button
                 type="submit"
@@ -751,8 +950,16 @@ const AIAssistant: React.FC = () => {
               </button>
             </div>
 
-            <p className="text-[10px] text-slate-600 text-center">
-              Novee is an AI consultant and may occasionally produce inaccurate information. • Powered by PrimeNova Studio
+            <p className="text-[10px] text-slate-600 text-center flex items-center justify-center gap-1.5">
+              {isListening && (
+                <span className="inline-flex items-center gap-1 text-rose-400 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-rose-400 animate-pulse" />
+                  Listening...
+                </span>
+              )}
+              {!isListening && (
+                <span>Novee is an AI consultant • {geminiEnabled ? '⚡ Gemini Powered' : 'Nova Engine'} • PrimeNova Studio</span>
+              )}
             </p>
           </form>
         </div>

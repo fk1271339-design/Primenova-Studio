@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_BASE_URL } from '../config';
 import AdminMessages from '../components/AdminMessages';
+import AdminAIInsights from '../components/AdminAIInsights';
 
 interface UserItem {
   id: string;
@@ -46,7 +47,7 @@ interface AdminNotification {
 }
 
 const AdminDashboardPage: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'analytics' | 'users' | 'contacts' | 'projects' | 'pricing' | 'notifications' | 'sessions'>('analytics');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'users' | 'contacts' | 'projects' | 'pricing' | 'notifications' | 'sessions' | 'ai-insights'>('analytics');
   
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [users, setUsers] = useState<UserItem[]>([]);
@@ -326,6 +327,7 @@ const AdminDashboardPage: React.FC = () => {
           { id: 'projects', label: 'Projects' },
           { id: 'pricing', label: 'Pricing' },
           { id: 'sessions', label: `Audit Log (${sessions.length})` },
+          { id: 'ai-insights', label: '🤖 AI Insights' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -495,6 +497,11 @@ const AdminDashboardPage: React.FC = () => {
             </table>
           </div>
         </motion.div>
+      )}
+
+      {/* AI Insights Tab */}
+      {activeTab === 'ai-insights' && (
+        <AdminAIInsights />
       )}
     </div>
   );

@@ -43,6 +43,41 @@ public class ChatController {
         return ResponseEntity.ok(chatService.addMessageToSession(userId, sessionId, sender, text));
     }
 
+    // ─── Nova Memory Endpoints ────────────────────────────────
+
+    /**
+     * Save Nova AI memory snapshot for a session.
+     * Called by frontend whenever memory changes (debounced).
+     */
+    @PutMapping("/sessions/{sessionId}/nova-memory")
+    public ResponseEntity<ChatSession> saveNovaMemory(
+            Authentication authentication,
+            @PathVariable String sessionId,
+            @RequestBody Map<String, Object> memorySnapshot) {
+        String userId = (String) authentication.getPrincipal();
+        return ResponseEntity.ok(chatService.saveNovaMemory(userId, sessionId, memorySnapshot));
+    }
+
+    /**
+     * Get Nova memory for the most recent session of this user.
+     * Called on app load to restore context.
+     */
+    @GetMapping("/sessions/latest/nova-memory")
+    public ResponseEntity<Map<String, Object>> getLatestNovaMemory(Authentication authentication) {
+        String userId = (String) authentication.getPrincipal();
+        return ResponseEntity.ok(chatService.getLatestNovaMemory(userId));
+    }
+
+    /**
+     * Get or create the active session for this user.
+     * Ensures a session always exists.
+     */
+    @PostMapping("/sessions/ensure-active")
+    public ResponseEntity<ChatSession> ensureActiveSession(Authentication authentication) {
+        String userId = (String) authentication.getPrincipal();
+        return ResponseEntity.ok(chatService.ensureActiveSession(userId));
+    }
+
     @PostMapping("/feedback")
     public ResponseEntity<Feedback> submitFeedback(Authentication authentication,
                                                    @RequestBody Map<String, String> body) {

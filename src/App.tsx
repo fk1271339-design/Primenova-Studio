@@ -23,6 +23,7 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ScrollToTop from './components/ScrollToTop';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import ProjectEstimatorAI from './components/ProjectEstimatorAI';
 
 import { useLocation } from 'react-router-dom';
 
@@ -50,6 +51,7 @@ function AppContent() {
           <Route path="/ai-assistant" element={<AIAssistantPage />} />
           <Route path="/pricing" element={<PricingPage />} />
           <Route path="/contact" element={<ContactPage />} />
+          <Route path="/estimator" element={<ProjectEstimatorAI />} />
 
           {/* Auth Routes */}
           <Route path="/login" element={<LoginPage />} />
