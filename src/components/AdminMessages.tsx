@@ -236,7 +236,7 @@ const AdminMessages: React.FC = () => {
       '',
       'Best regards,',
       'PrimeNova Studio',
-      'hello@primenova.studio',
+      'primenovastudioo@gmail.com',
     ].join('\n');
 
     const params = new URLSearchParams({

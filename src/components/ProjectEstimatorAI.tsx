@@ -222,7 +222,7 @@ const ResultCard = ({ result, form }: { result: EstimatorResult; form: Estimator
         <h2>Summary</h2>
         <p>{result.aiSummary}</p>
         <div className="footer">
-          <p>PrimeNova Studio | hello@primenova.studio | primenova.studio</p>
+          <p>PrimeNova Studio | primenovastudioo@gmail.com | primenova.studio</p>
           <p>This is an approximate estimate. Final pricing subject to detailed discovery call.</p>
         </div>
       </div>

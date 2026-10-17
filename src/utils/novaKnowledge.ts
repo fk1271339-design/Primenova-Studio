@@ -290,7 +290,7 @@ export const ABOUT_PRIMENOVA = {
     aiIntegrations: '25+',
   },
   contact: {
-    email: 'hello@primenova.studio',
+    email: 'primenovastudioo@gmail.com',
     website: 'primenova.studio',
   },
   values: [

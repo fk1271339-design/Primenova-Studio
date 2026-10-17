@@ -369,7 +369,7 @@ const Contact: React.FC = () => {
             {/* Contact details */}
             <div className="flex flex-col gap-7">
               {[
-                { icon: Mail,   label: 'Email',         val: 'hello@primenova.studio', href: 'mailto:hello@primenova.studio' },
+                { icon: Mail,   label: 'Email',         val: 'primenovastudioo@gmail.com', href: 'mailto:primenovastudioo@gmail.com' },
                 { icon: Clock4, label: 'Response',       val: 'Within 24 hours',        href: null },
                 { icon: Globe,  label: 'Availability',   val: 'Global · Remote-First',  href: null },
               ].map(({ icon: Icon, label, val, href }) => (

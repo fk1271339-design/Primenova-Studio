@@ -19,8 +19,8 @@ const Footer: React.FC = () => {
           </p>
           <div className="mt-1 sm:mt-2">
             <span className="text-[10px] font-mono text-muted-foreground uppercase tracking-widest block">Direct Contact:</span>
-            <a href="mailto:hello@primenova.studio" className="text-xs sm:text-sm font-bold text-amber-400 hover:underline">
-              hello@primenova.studio
+            <a href="mailto:primenovastudioo@gmail.com" className="text-xs sm:text-sm font-bold text-amber-400 hover:underline">
+              primenovastudioo@gmail.com
             </a>
           </div>
         </div>
