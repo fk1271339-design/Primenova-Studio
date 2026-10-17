@@ -28,13 +28,6 @@ interface ChatSessionSummary {
   novaPreferredLanguage?: string;
 }
 
-interface AIInsight {
-  leadScore: number; // 0-100
-  summary: string;
-  recommendations: string[];
-  intent: string;
-}
-
 // ─── LEAD SCORE CALC ─────────────────────────────────────────
 
 function calcLeadScore(session: ChatSessionSummary): number {

@@ -534,8 +534,22 @@ const AIAssistant: React.FC = () => {
   }, [inputValue, handleSendMessage]);
 
   // ── Voice Input (Web Speech API) ──
+  // Custom typed interface to avoid Vercel build errors (no @types/web)
+  interface ISpeechRecognition {
+    lang: string;
+    interimResults: boolean;
+    continuous: boolean;
+    maxAlternatives: number;
+    onstart: (() => void) | null;
+    onend: (() => void) | null;
+    onerror: (() => void) | null;
+    onresult: ((event: { results: { length: number; [i: number]: { [i: number]: { transcript: string } } } }) => void) | null;
+    start(): void;
+    stop(): void;
+  }
+
   const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  const recognitionRef = useRef<ISpeechRecognition | null>(null);
   const voiceSupported = typeof window !== 'undefined' &&
     ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
@@ -548,9 +562,10 @@ const AIAssistant: React.FC = () => {
       return;
     }
 
-    const SpeechRecognitionAPI =
-      (window as Window & { SpeechRecognition?: typeof SpeechRecognition; webkitSpeechRecognition?: typeof SpeechRecognition }).SpeechRecognition ||
-      (window as Window & { webkitSpeechRecognition?: typeof SpeechRecognition }).webkitSpeechRecognition;
+    type SpeechRecognitionCtor = new () => ISpeechRecognition;
+    const SpeechRecognitionAPI: SpeechRecognitionCtor | undefined =
+      (window as unknown as Record<string, unknown>)['SpeechRecognition'] as SpeechRecognitionCtor ||
+      (window as unknown as Record<string, unknown>)['webkitSpeechRecognition'] as SpeechRecognitionCtor;
 
     if (!SpeechRecognitionAPI) return;
 
@@ -562,16 +577,17 @@ const AIAssistant: React.FC = () => {
 
     recognition.onstart = () => setIsListening(true);
 
-    recognition.onresult = (event: SpeechRecognitionEvent) => {
-      const transcript = Array.from(event.results)
-        .map(r => r[0].transcript)
-        .join('');
+    recognition.onresult = (event) => {
+      const results = event.results;
+      let transcript = '';
+      for (let i = 0; i < results.length; i++) {
+        transcript += results[i][0].transcript;
+      }
       setInputValue(transcript);
     };
 
     recognition.onend = () => {
       setIsListening(false);
-      // Auto-send if we got a non-empty transcript
       setInputValue(prev => {
         if (prev.trim()) {
           setTimeout(() => handleSendMessage(prev.trim()), 100);
